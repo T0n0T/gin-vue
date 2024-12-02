@@ -16,11 +16,21 @@
             ]
           },
         {
-            "name": "Launch Package",
+            "name": "Backend",
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${fileDirname}"
-        }
+            "program": "${workspaceFolder}"
+        },
+    ],
+    "compounds": [
+      {
+        "name": "Both (Backend & Frontend)",
+        "configurations": [
+          "Backend",
+          "Frontend"
+        ],
+        "stopAll": true
+      }
     ]
 }
