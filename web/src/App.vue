@@ -3,14 +3,13 @@
 </script>
 
 <template>
-  123
-    <router-view />
+    <router-view/>
 </template>
 
-<style scoped>
-#app{
-  height: 100%;
-  width: 100%;
+<style>
+#app {
+  height: 100vh;
+  width: 100vw;
   overflow: hidden;
 }
 </style>
