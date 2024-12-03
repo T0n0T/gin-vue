@@ -16,7 +16,7 @@
 }
 </style>
 
-<script lang="ts" setup>
+<script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
 import { useStore } from '@/store'
 

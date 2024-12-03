@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+<script setup>
 import Menu from '@/components/menu.vue'
 import Head from '@/components/head.vue'
 </script>
@@ -12,7 +12,7 @@ import Head from '@/components/head.vue'
                     <Head />
                 </el-header>
                 <el-main class="right-main">
-                    main
+                    <router-view></router-view>
                 </el-main>
             </el-container>
         </el-container>

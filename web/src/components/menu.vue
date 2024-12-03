@@ -3,7 +3,7 @@
         <el-menu class="el-menu-vertical" :default-active="defaultActive" @select="handleSelect">
             <div class="logo-container">                
                 <img src="@/assets/logo.png" alt="logo" class="logo"/>
-                <span class="logo-text">网关管理系统</span>
+                <span class="logo-text">balabala</span>
             </div>
 
             <!-- 数据统计 -->
@@ -23,26 +23,26 @@
             </el-menu-item>
 
             <!-- 无线配置子菜单 -->
-            <el-sub-menu index="3">
+            <el-sub-menu index="wireless">
                 <template #title>
                     <el-icon>
                         <Connection />
                     </el-icon>
                     <span>无线配置</span>
                 </template>
-                <el-menu-item index="1-1">
+                <el-menu-item index="wireless/bluetooth">
                     <el-icon>
                         <font-awesome-icon icon="fa-brands fa-bluetooth" />
                     </el-icon>
                     <span>Bluetooth</span>
                 </el-menu-item>
-                <el-menu-item index="1-2">
+                <el-menu-item index="wireless/wlan">
                     <el-icon>
                         <font-awesome-icon icon="wifi" />
                     </el-icon>
                     <span>WLAN</span>
                 </el-menu-item>
-                <el-menu-item index="1-3">
+                <el-menu-item index="wireless/lorawan">
                     <el-icon>
                         <font-awesome-icon icon="signal" />
                     </el-icon>
@@ -53,27 +53,56 @@
     </el-aside>
 </template>
 
-<script lang="ts" setup>
-import { ref } from 'vue'
+<script setup>
+import { ref, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router' 
 import { Connection, Switch, DataLine } from '@element-plus/icons-vue'
-import SvgIcon from '@/components/svgIcon.vue'
 import { useStore } from '@/store'
 
-const defaultActive = ref('1')
+const router = useRouter()
+const route = useRoute()
 const store = useStore()
 
-const handleSelect = (index, indexPath) => {
-    // 根据选中的菜单更新面包屑
+// 使用路由路径作为激活菜单项
+const defaultActive = ref(route.path)
+
+const handleSelect = (index) => {
+    // 使用路由路径作为菜单索引
     const menuText = {
-        '1': ['数据统计'],
-        '2': ['路由配置'],
-        '3': ['无线配置'],
-        '1-1': ['无线配置', 'Bluetooth'],
-        '1-2': ['无线配置', 'WLAN'],
-        '1-3': ['无线配置', 'LoRaWan'],
+        '/': ['首页'],
+        'stats': ['数据统计'],
+        'router': ['路由配置'],
+        'wireless': ['无线配置'],
+        'wireless/bluetooth': ['无线配置', 'Bluetooth'],
+        'wireless/wlan': ['无线配置', 'WLAN'],
+        'wireless/lorawan': ['无线配置', 'LoRaWan'],
     }
+    
+    // 更新面包屑
     store.updateBreadcrumbs(menuText[index] || [])
+    
+    // 导航到对应路由
+    router.push('/' + index)
 }
+
+// 监听路由变化，更新面包屑
+watch(
+    () => route.path,
+    (newPath) => {
+        defaultActive.value = newPath
+        const menuText = {
+            '/': ['首页'],
+            '/stats': ['数据统计'],
+            '/router': ['路由配置'],
+            '/wireless': ['无线配置'],
+            '/bluetooth': ['无线配置', 'Bluetooth'],
+            '/wlan': ['无线配置', 'WLAN'],
+            '/lorawan': ['无线配置', 'LoRaWan'],
+        }
+        store.updateBreadcrumbs(menuText[newPath] || [])
+    },
+    { immediate: true }
+)
 </script>
 
 <style scoped>
