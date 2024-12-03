@@ -1,14 +1,15 @@
 <script lang="ts" setup>
-import Aside from '@/components/menu.vue'
+import Menu from '@/components/menu.vue'
+import Head from '@/components/head.vue'
 </script>
 
 <template>
     <div class="common-layout">
         <el-container class="container">
-            <Aside class="aside">aside</Aside>
+            <Menu class="aside" />
             <el-container>
                 <el-header class="el-header">
-                    <common-header>header</common-header>
+                    <Head />
                 </el-header>
                 <el-main class="right-main">
                     main
@@ -22,7 +23,7 @@ import Aside from '@/components/menu.vue'
 .common-layout {
     height: 100%;
     width: 100%;
-    background-color: #53ebca;
+    /* background-color: #53ebca; */
     padding: 10px;
 }
 .aside {
@@ -30,12 +31,20 @@ import Aside from '@/components/menu.vue'
 }
 .container {
     height: 100%;
-    background-color: #fce876;
+    /* background-color: #25b97b; */
     overflow: hidden;
+    border-radius: 10px;
     /* 防止溢出 */
 }
-
+.el-main {
+    /* padding: 0; */
+}
 .el-header {
-    background-color: #bfc74b;
+    background-color: var(--el-bg-color);
+    display: flex;
+    align-items: center;
+    height: auto !important;
+    padding: 12px 20px;    
+    border-radius: 10px;
 }
 </style>
