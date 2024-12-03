@@ -1,29 +1,37 @@
 <template>
-    <svg aria-hidden="true" class="svg-icon">
-        <use :href="symbolId" :fill="color" />
+    <svg aria-hidden="true" :style="styles" viewBox="0 0 1024 1024">
+        <use :xlink:href="iconName" :fill="color" width="100%" height="100%"/>
     </svg>
 </template>
 
-<script setup>
-import { computed } from 'vue'
+<script setup lang="ts">
+import { computed } from "vue";
 
 const props = defineProps({
     name: {
         type: String,
-        required: true
+        required: true,
     },
     color: {
         type: String,
-        default: ''
-    }
-})
+        default: "#08bebe",
+    },
+    width: {
+        type: String,
+        default: "100%",
+    },
+    height: {
+        type: String,
+        default: "100%",
+    },
+});
 
-const symbolId = computed(() => `#icon-${props.name}`)
+const styles = computed(() => {
+    return `width: ${props.width}; height:${props.height}; display: block;`;
+});
+
+const iconName = computed(() => {
+    return `#icon-${props.name}`;
+});
 </script>
 
-<style scoped>
-.svg-icon {
-    block-size: auto;
-    background-color: #000;
-}
-</style>
