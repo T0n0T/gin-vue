@@ -1,5 +1,4 @@
 import { createRouter, createWebHashHistory } from 'vue-router';
-import Bluetooth from '@/views/bluetooth.vue'
 
 const routesOptions = [
     {
@@ -8,6 +7,14 @@ const routesOptions = [
         component: () => import('../views/main.vue'),
         children: [
             {
+                path: 'router',
+                component: () => import('@/views/routerMngr.vue')
+            },
+            {
+                path: 'stats',
+                component: () => import('@/views/stats.vue')
+            },
+            {
                 path: 'wireless/bluetooth',
                 component: () => import('@/views/wireless/bluetooth.vue')
             },
@@ -15,11 +22,10 @@ const routesOptions = [
                 path: 'wireless/wlan',
                 component: () => import('@/views/wireless/wlan.vue')
             },
-            // {
-            //     path: 'wireless/lorawan',
-            //     component: () => import('@/views/wireless/lorawan.vue')
-            // }
-            // 其他路由配置...
+            {
+                path: 'wireless/lorawan',
+                component: () => import('@/views/wireless/lorawan.vue')
+            }
         ]
     }
 ];

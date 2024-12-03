@@ -1,13 +1,13 @@
 <template>
     <el-aside width="200px">
         <el-menu class="el-menu-vertical" :default-active="defaultActive" @select="handleSelect">
-            <div class="logo-container">                
-                <img src="@/assets/logo.png" alt="logo" class="logo"/>
+            <div class="logo-container">
+                <img src="@/assets/logo.png" alt="logo" class="logo" />
                 <span class="logo-text">balabala</span>
             </div>
 
             <!-- 数据统计 -->
-            <el-menu-item index="1">
+            <el-menu-item index="stats">
                 <el-icon>
                     <DataLine />
                 </el-icon>
@@ -15,7 +15,7 @@
             </el-menu-item>
 
             <!-- 路由配置 -->
-            <el-menu-item index="2">
+            <el-menu-item index="router">
                 <el-icon>
                     <Switch />
                 </el-icon>
@@ -55,7 +55,7 @@
 
 <script setup>
 import { ref, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router' 
+import { useRouter, useRoute } from 'vue-router'
 import { Connection, Switch, DataLine } from '@element-plus/icons-vue'
 import { useStore } from '@/store'
 
@@ -69,18 +69,14 @@ const defaultActive = ref(route.path)
 const handleSelect = (index) => {
     // 使用路由路径作为菜单索引
     const menuText = {
-        '/': ['首页'],
+        '/': [''],
         'stats': ['数据统计'],
         'router': ['路由配置'],
-        'wireless': ['无线配置'],
         'wireless/bluetooth': ['无线配置', 'Bluetooth'],
         'wireless/wlan': ['无线配置', 'WLAN'],
         'wireless/lorawan': ['无线配置', 'LoRaWan'],
     }
-    
-    // 更新面包屑
-    store.updateBreadcrumbs(menuText[index] || [])
-    
+
     // 导航到对应路由
     router.push('/' + index)
 }
@@ -91,15 +87,19 @@ watch(
     (newPath) => {
         defaultActive.value = newPath
         const menuText = {
-            '/': ['首页'],
+            '/': [''],
             '/stats': ['数据统计'],
             '/router': ['路由配置'],
-            '/wireless': ['无线配置'],
-            '/bluetooth': ['无线配置', 'Bluetooth'],
-            '/wlan': ['无线配置', 'WLAN'],
-            '/lorawan': ['无线配置', 'LoRaWan'],
+            '/wireless/bluetooth': ['无线配置', 'Bluetooth'],
+            '/wireless/wlan': ['无线配置', 'WLAN'],
+            '/wireless/lorawan': ['无线配置', 'LoRaWan'],
         }
-        store.updateBreadcrumbs(menuText[newPath] || [])
+        if (menuText.hasOwnProperty(newPath)) {
+            store.updateBreadcrumbs(menuText[newPath])
+        } else {
+            console.warn(`未找到路径: ${newPath}`)
+            store.updateBreadcrumbs([])
+        }
     },
     { immediate: true }
 )
@@ -167,7 +167,7 @@ watch(
     /* 选中文字色 */
 }
 
-.logo-container {    
+.logo-container {
     padding: 10px;
     display: flex;
     align-items: center;
