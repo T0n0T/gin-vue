@@ -3,7 +3,7 @@
         <el-menu class="el-menu-vertical" :default-active="defaultActive" @select="handleSelect">
             <div class="logo-container">
                 <!-- <svg-icon name="logo" class="logo"/> -->
-                <img src="@/assets/ubuntu.png" alt="logo" class="logo"/>
+                <img src="@/assets/cat.png" alt="logo" class="logo"/>
                 <span class="logo-text">网关管理系统</span>
             </div>
 
@@ -149,7 +149,9 @@ const handleSelect = (index, indexPath) => {
 }
 
 .logo {
-    /* align-self: stretch; */
+    width: 80%;
+    height: 80%;
+    align-self: center;
 }
 
 .logo-text {
