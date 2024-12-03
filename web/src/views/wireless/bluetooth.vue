@@ -52,46 +52,9 @@
             </div>
         </div>
 
-        <!-- 右侧连接图 -->
-        <div class="connection-map">
-            <div class="map-container">
-                <!-- 中心设备 -->
-                <div class="central-device">
-                    <div class="device-icon">
-                        <el-icon><Monitor /></el-icon>
-                    </div>
-                    <span>nRF52 Connectivity</span>
-                </div>
-
-                <!-- 连接的设备 -->
-                <div class="connected-devices">
-                    <div v-for="device in connectedDevices" 
-                         :key="device.address" 
-                         class="peripheral-device"
-                    >
-                        <div class="connection-line"></div>
-                        <div class="device-card">
-                            <div class="device-header">
-                                <span>{{ device.name || 'Unknown device' }}</span>
-                                <el-dropdown>
-                                    <el-icon><Setting /></el-icon>
-                                    <template #dropdown>
-                                        <el-dropdown-menu>
-                                            <el-dropdown-item>Update connection...</el-dropdown-item>
-                                            <el-dropdown-item>Update PHY...</el-dropdown-item>
-                                            <el-dropdown-item>Update data length...</el-dropdown-item>
-                                            <el-dropdown-item>Update MTU...</el-dropdown-item>
-                                            <el-dropdown-item>Pair...</el-dropdown-item>
-                                            <el-dropdown-item>Disconnect</el-dropdown-item>
-                                        </el-dropdown-menu>
-                                    </template>
-                                </el-dropdown>
-                            </div>
-                            <div class="device-address">{{ device.address }}</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- 右侧拓扑图 -->
+        <div class="topology-map">
+            <TopologyGraph />
         </div>
     </div>
 </template>
@@ -99,6 +62,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { Refresh, Monitor, Setting } from '@element-plus/icons-vue'
+import TopologyGraph from '@/components/TopologyGraph.vue'
 
 // 状态
 const sortBySignal = ref(true)
@@ -223,7 +187,7 @@ const signalStrength = (rssi) => {
     border-radius: 2px;
 }
 
-.connection-map {
+.topology-map {
     flex: 1;
     background: #f5f7fa;
     border-radius: 8px;
