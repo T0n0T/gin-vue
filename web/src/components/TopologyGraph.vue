@@ -58,6 +58,24 @@ const updateTopology = (devices) => {
     updateLinks(links)
 }
 
+// 添加拖拽相关的函数
+const dragstarted = (event, d) => {
+    if (!event.active) simulation.alphaTarget(0.3).restart()
+    d.fx = d.x
+    d.fy = d.y
+}
+
+const dragged = (event, d) => {
+    d.fx = event.x
+    d.fy = event.y
+}
+
+const dragended = (event, d) => {
+    if (!event.active) simulation.alphaTarget(0)
+    d.fx = null
+    d.fy = null
+}
+
 const updateNodes = (nodes) => {
     // 更新节点组
     const node = svg.selectAll('g.node')
@@ -159,8 +177,12 @@ onMounted(() => {
         address: '00:11:22:33:44:55'
     }]
 
-    // 初始化拓扑图
-    updateTopology(props.devices || [])
+    // 更新节点
+    updateNodes(initialNodes)
+    
+    // 初始化模拟器节点
+    simulation.nodes(initialNodes)
+    simulation.alpha(1).restart()
 
     // 监听力导向图的tick事件
     simulation.on('tick', () => {

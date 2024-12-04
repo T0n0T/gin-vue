@@ -3,20 +3,13 @@
         <!-- 左侧已连接设备列表 -->
         <div class="device-list">
             <div class="list-header">
-                <h3>Connected devices</h3>
-                <div class="actions">
-                    <el-button size="small" @click="clearDevices">Clear</el-button>
-                </div>
+                <h3 class="list-title">已连接设备</h3>
+                <el-button :icon="DeleteFilled" circle="true" @click="clearDevices" />
             </div>
-
             <!-- 已连接设备列表 -->
             <div class="devices">
-                <div 
-                    v-for="device in connectedDevices" 
-                    :key="device.address" 
-                    class="device-item"
-                    :class="{ 'selected': selectedDevice?.address === device.address }"
-                >
+                <div v-for="device in connectedDevices" :key="device.address" class="device-item"
+                    :class="{ 'selected': selectedDevice?.address === device.address }">
                     <div class="device-info">
                         <span class="device-name">{{ device.name || 'Unknown name' }}</span>
                         <span class="device-address">{{ device.address }}</span>
@@ -25,11 +18,7 @@
                             <div class="signal-bars" :style="{ width: signalStrength(device.rssi) }"></div>
                         </div>
                     </div>
-                    <el-button 
-                        type="primary" 
-                        size="small"
-                        @click="configureDevice(device)"
-                    >
+                    <el-button type="primary" size="small" @click="configureDevice(device)">
                         Configure
                     </el-button>
                 </div>
@@ -38,43 +27,27 @@
 
         <!-- 右侧拓扑图 -->
         <div class="topology-map">
-            <TopologyGraph 
-                :devices="connectedDevices"
-                @openScanDialog="openScanDialog"
-                @selectDevice="handleDeviceSelect"
-            />
+            <TopologyGraph :devices="connectedDevices" @openScanDialog="openScanDialog"
+                @selectDevice="handleDeviceSelect" />
         </div>
 
         <!-- 添加搜索设备弹窗 -->
-        <el-dialog
-            v-model="scanDialogVisible"
-            title="Discovered devices"
-            width="400px"
-        >
+        <el-dialog v-model="scanDialogVisible" title="Discovered devices" width="400px">
             <div class="scan-dialog-content">
                 <div class="scan-controls">
                     <el-button type="primary" @click="startScan">Start scan</el-button>
                     <el-button @click="clearScanResults">Clear</el-button>
                 </div>
-                
+
                 <div class="scan-options">
                     <el-checkbox v-model="sortBySignal">Sort by signal strength</el-checkbox>
                     <div class="filter-input">
-                        <el-input
-                            v-model="filterText"
-                            placeholder="Device name or address"
-                            clearable
-                        />
+                        <el-input v-model="filterText" placeholder="Device name or address" clearable />
                     </div>
                     <div class="scan-timeout">
                         <span>Active scan</span>
                         <el-switch v-model="activeScan" />
-                        <el-input-number
-                            v-model="timeout"
-                            :min="0"
-                            :max="300"
-                            size="small"
-                        />
+                        <el-input-number v-model="timeout" :min="0" :max="300" size="small" />
                     </div>
                 </div>
 
@@ -87,11 +60,7 @@
                                 <span>{{ device.rssi }} dBm</span>
                             </div>
                         </div>
-                        <el-button 
-                            type="primary" 
-                            size="small"
-                            @click="connectDevice(device)"
-                        >
+                        <el-button type="primary" size="small" @click="connectDevice(device)">
                             Connect
                         </el-button>
                     </div>
@@ -103,7 +72,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Refresh, Monitor, Setting } from '@element-plus/icons-vue'
+import { Refresh, Monitor, Setting, Delete, DeleteFilled } from '@element-plus/icons-vue'
 import TopologyGraph from '@/components/TopologyGraph.vue'
 
 // 状态
@@ -120,21 +89,21 @@ const selectedDevice = ref(null)
 // 计算属性
 const filteredDevices = computed(() => {
     let filtered = [...discoveredDevices.value]
-    
+
     // 应用过滤
     if (filterText.value) {
         const searchText = filterText.value.toLowerCase()
-        filtered = filtered.filter(device => 
+        filtered = filtered.filter(device =>
             (device.name && device.name.toLowerCase().includes(searchText)) ||
             device.address.toLowerCase().includes(searchText)
         )
     }
-    
+
     // 按信号强度排序
     if (sortBySignal.value) {
         filtered.sort((a, b) => b.rssi - a.rssi)
     }
-    
+
     return filtered
 })
 
@@ -151,6 +120,7 @@ const startScan = () => {
 const clearDevices = () => {
     devices.value = []
     connectedDevices.value = []
+    // TODO:断开设备连接
 }
 
 const connectDevice = (device) => {
@@ -204,8 +174,8 @@ const handleDeviceSelect = (device) => {
 
 .list-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: space-evenly; 
+    align-items: center;  
 }
 
 .scan-options {
