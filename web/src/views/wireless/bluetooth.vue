@@ -1,39 +1,24 @@
 <template>
     <div class="bluetooth-container">
-        <!-- 左侧设备列表 -->
+        <!-- 左侧已连接设备列表 -->
         <div class="device-list">
             <div class="list-header">
-                <h3>Discovered devices</h3>
+                <h3>Connected devices</h3>
                 <div class="actions">
-                    <el-button type="primary" size="small" @click="startScan">
-                        <el-icon><Refresh /></el-icon>
-                        Start scan
-                    </el-button>
                     <el-button size="small" @click="clearDevices">Clear</el-button>
                 </div>
             </div>
 
-            <!-- 搜索选项 -->
-            <div class="scan-options">
-                <el-checkbox v-model="sortBySignal">Sort by signal strength</el-checkbox>
-                <el-input
-                    v-model="filterText"
-                    placeholder="Device name or address"
-                    clearable
-                    size="small"
-                />
-                <el-checkbox v-model="activeScan">Active scan</el-checkbox>
-                <div class="timeout-input">
-                    <span>Timeout:</span>
-                    <el-input v-model="timeout" size="small" />
-                </div>
-            </div>
-
-            <!-- 设备列表 -->
+            <!-- 已连接设备列表 -->
             <div class="devices">
-                <div v-for="device in filteredDevices" :key="device.address" class="device-item">
+                <div 
+                    v-for="device in connectedDevices" 
+                    :key="device.address" 
+                    class="device-item"
+                    :class="{ 'selected': selectedDevice?.address === device.address }"
+                >
                     <div class="device-info">
-                        <span class="device-name">{{ device.name || 'Unknown device' }}</span>
+                        <span class="device-name">{{ device.name || 'Unknown name' }}</span>
                         <span class="device-address">{{ device.address }}</span>
                         <div class="signal-strength">
                             <span>{{ device.rssi }} dBm</span>
@@ -43,10 +28,9 @@
                     <el-button 
                         type="primary" 
                         size="small"
-                        :disabled="device.connected"
-                        @click="connectDevice(device)"
+                        @click="configureDevice(device)"
                     >
-                        {{ device.connected ? 'Connected' : 'Connect' }}
+                        Configure
                     </el-button>
                 </div>
             </div>
@@ -54,8 +38,66 @@
 
         <!-- 右侧拓扑图 -->
         <div class="topology-map">
-            <TopologyGraph />
+            <TopologyGraph 
+                :devices="connectedDevices"
+                @openScanDialog="openScanDialog"
+                @selectDevice="handleDeviceSelect"
+            />
         </div>
+
+        <!-- 添加搜索设备弹窗 -->
+        <el-dialog
+            v-model="scanDialogVisible"
+            title="Discovered devices"
+            width="400px"
+        >
+            <div class="scan-dialog-content">
+                <div class="scan-controls">
+                    <el-button type="primary" @click="startScan">Start scan</el-button>
+                    <el-button @click="clearScanResults">Clear</el-button>
+                </div>
+                
+                <div class="scan-options">
+                    <el-checkbox v-model="sortBySignal">Sort by signal strength</el-checkbox>
+                    <div class="filter-input">
+                        <el-input
+                            v-model="filterText"
+                            placeholder="Device name or address"
+                            clearable
+                        />
+                    </div>
+                    <div class="scan-timeout">
+                        <span>Active scan</span>
+                        <el-switch v-model="activeScan" />
+                        <el-input-number
+                            v-model="timeout"
+                            :min="0"
+                            :max="300"
+                            size="small"
+                        />
+                    </div>
+                </div>
+
+                <div class="discovered-devices">
+                    <div v-for="device in filteredDevices" :key="device.address" class="scan-device-item">
+                        <div class="device-info">
+                            <span class="device-name">{{ device.name || 'Unknown name' }}</span>
+                            <span class="device-address">{{ device.address }}</span>
+                            <div class="signal-strength">
+                                <span>{{ device.rssi }} dBm</span>
+                            </div>
+                        </div>
+                        <el-button 
+                            type="primary" 
+                            size="small"
+                            @click="connectDevice(device)"
+                        >
+                            Connect
+                        </el-button>
+                    </div>
+                </div>
+            </div>
+        </el-dialog>
     </div>
 </template>
 
@@ -71,25 +113,39 @@ const activeScan = ref(true)
 const timeout = ref(0)
 const devices = ref([])
 const connectedDevices = ref([])
+const scanDialogVisible = ref(false)
+const discoveredDevices = ref([])
+const selectedDevice = ref(null)
 
 // 计算属性
 const filteredDevices = computed(() => {
-    let result = [...devices.value]
+    let filtered = [...discoveredDevices.value]
+    
+    // 应用过滤
     if (filterText.value) {
-        result = result.filter(d => 
-            (d.name && d.name.toLowerCase().includes(filterText.value.toLowerCase())) ||
-            d.address.toLowerCase().includes(filterText.value.toLowerCase())
+        const searchText = filterText.value.toLowerCase()
+        filtered = filtered.filter(device => 
+            (device.name && device.name.toLowerCase().includes(searchText)) ||
+            device.address.toLowerCase().includes(searchText)
         )
     }
+    
+    // 按信号强度排序
     if (sortBySignal.value) {
-        result.sort((a, b) => b.rssi - a.rssi)
+        filtered.sort((a, b) => b.rssi - a.rssi)
     }
-    return result
+    
+    return filtered
 })
 
 // 方法
 const startScan = () => {
     // 实现扫描逻辑
+    // 模拟发现设备
+    discoveredDevices.value = [
+        { name: 'Device 1', address: '00:11:22:33:44:55', rssi: -65 },
+        { name: 'Device 2', address: '66:77:88:99:AA:BB', rssi: -75 }
+    ]
 }
 
 const clearDevices = () => {
@@ -98,15 +154,33 @@ const clearDevices = () => {
 }
 
 const connectDevice = (device) => {
-    // 实现连接逻辑
-    device.connected = true
+    // 为设备添加唯一ID
+    device.id = device.address // 使用地址作为ID
     connectedDevices.value.push(device)
+    scanDialogVisible.value = false
+}
+
+const configureDevice = (device) => {
+    // 实现配置逻辑
 }
 
 const signalStrength = (rssi) => {
     // 将 RSSI 转换为信号强度百分比
     const percent = Math.min(100, Math.max(0, (rssi + 100) * 2))
     return `${percent}%`
+}
+
+const openScanDialog = () => {
+    scanDialogVisible.value = true
+}
+
+const clearScanResults = () => {
+    discoveredDevices.value = []
+}
+
+// 处理设备选择
+const handleDeviceSelect = (device) => {
+    selectedDevice.value = device
 }
 </script>
 
@@ -255,5 +329,53 @@ const signalStrength = (rssi) => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 5px;
+}
+
+.scan-dialog-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.scan-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.scan-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+    background: #f5f7fa;
+    border-radius: 4px;
+}
+
+.scan-timeout {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.discovered-devices {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.scan-device-item {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filter-input {
+    width: 100%;
+}
+
+.device-item.selected {
+    background-color: #ecf5ff;
+    border-radius: 4px;
 }
 </style>

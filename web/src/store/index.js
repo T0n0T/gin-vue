@@ -7,7 +7,6 @@ export const useStore = defineStore('store', () => {
     
     // 更新面包屑的方法
     const updateBreadcrumbs = (items) => {
-        console.log(items)
         breadcrumbs.value = ['', ...items]
     }
 
