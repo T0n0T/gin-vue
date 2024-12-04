@@ -2,10 +2,10 @@
     <div class="bluetooth-container">
         <!-- 左侧已连接设备列表 -->
         <div class="device-list">
-            <div class="list-header">
+            <!-- <div class="list-header">
                 <h3 class="list-title">已连接设备</h3>
                 <el-button :icon="DeleteFilled" circle="true" @click="clearDevices" />
-            </div>
+            </div> -->
             <!-- 已连接设备列表 -->
             <div class="devices">
                 <div v-for="device in connectedDevices" :key="device.address" class="device-item"
@@ -14,8 +14,13 @@
                         <span class="device-name">{{ device.name || 'Unknown name' }}</span>
                         <span class="device-address">{{ device.address }}</span>
                         <div class="signal-strength">
-                            <span>{{ device.rssi }} dBm</span>
-                            <div class="signal-bars" :style="{ width: signalStrength(device.rssi) }"></div>
+                            <div class="signal-text" style="width: 100px">
+                                <span>{{ device.rssi }}</span>
+                                <span style="margin: 0 2px"></span>
+                                <span>dBm</span>
+                                <span style="margin: 0 2px"></span>
+                                <div class="signal-bars" :style="{ width: signalStrength(device.rssi) }"></div>
+                            </div>                                                        
                         </div>
                     </div>
                     <el-button type="primary" size="small" @click="configureDevice(device)">
@@ -57,7 +62,10 @@
                             <span class="device-name">{{ device.name || 'Unknown name' }}</span>
                             <span class="device-address">{{ device.address }}</span>
                             <div class="signal-strength">
-                                <span>{{ device.rssi }} dBm</span>
+                                <div class="signal-text" style="width: 100px">
+                                    <span>{{ device.rssi }}</span>
+                                    <span>dBm</span>
+                                </div>
                             </div>
                         </div>
                         <el-button type="primary" size="small" @click="connectDevice(device)">
@@ -112,7 +120,7 @@ const startScan = () => {
     // 实现扫描逻辑
     // 模拟发现设备
     discoveredDevices.value = [
-        { name: 'Device 1', address: '00:11:22:33:44:55', rssi: -65 },
+        { name: 'Device 1', address: '00:11:22:33:44:55', rssi: -90 },
         { name: 'Device 2', address: '66:77:88:99:AA:BB', rssi: -75 }
     ]
 }
@@ -137,6 +145,7 @@ const configureDevice = (device) => {
 const signalStrength = (rssi) => {
     // 将 RSSI 转换为信号强度百分比
     const percent = Math.min(100, Math.max(0, (rssi + 100) * 2))
+    console.log(percent)
     return `${percent}%`
 }
 
@@ -220,15 +229,22 @@ const handleDeviceSelect = (device) => {
 
 .signal-strength {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    align-items: center;   
     font-size: 12px;
+    gap: 10px;
+}
+
+.signal-text {
+    min-width: 100px;
+    display: flex;
+    align-items: center;    
 }
 
 .signal-bars {
     height: 4px;
     background: #409EFF;
     border-radius: 2px;
+    align-self: center;
 }
 
 .topology-map {
