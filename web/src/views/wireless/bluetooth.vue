@@ -4,7 +4,7 @@
         <div class="device-list">
             <div class="devices">
                 <div v-for="device in bluetoothStore.connectedDevices" :key="device.address" class="device-item"
-                    :class="{ 'selected': bluetoothStore.selectedDevice?.address === device.address }">
+                    :class="{ 'selected': bluetoothStore.selectedDevice?.address === device.address }" @click="handleDeviceSelect(device)">
                     <div class="device-info">
                         <span class="device-name">{{ device.name || 'Unknown name' }}</span>
                         <span class="device-address">{{ device.address }}</span>
@@ -28,8 +28,7 @@
 
         <!-- 右侧拓扑图 -->
         <div class="topology-map">
-            <TopologyGraph :devices="bluetoothStore.connectedDevices" @openScanDialog="openScanDialog"
-                @selectDevice="handleDeviceSelect" />
+            <TopologyGraph :devices="devices" @openScanDialog="openScanDialog" @selectDevice="handleDeviceSelect" />
         </div>
 
         <!-- 添加搜索设备弹窗 -->
@@ -70,18 +69,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Setting, DeleteFilled } from '@element-plus/icons-vue'
-import TopologyGraph from '@/components/TopologyGraph.vue'
+import TopologyGraph from '@/components/topology/bluetooth.vue'
 import { useBluetoothStore } from '@/store/bluetooth'
 import { ElMessage } from 'element-plus'
+
 // 状态
 const sortBySignal = ref(true)
 const filterText = ref('')
 const bluetoothStore = useBluetoothStore()
 const scanDialogVisible = ref(false)
 const discoveredDevices = ref([])
-
+const devices = ref([])
 
 // 计算属性
 const filteredDevices = computed(() => {
@@ -104,6 +104,14 @@ const filteredDevices = computed(() => {
     return filtered
 })
 
+// 在组件挂载时更新拓扑图
+onMounted(() => {
+    // 从 store 恢复设备数据
+    if (bluetoothStore.connectedDevices.length > 0) {
+        devices.value = [...bluetoothStore.connectedDevices]
+    }
+})
+
 // 方法
 const startScan = () => {
     // 实现扫描逻辑
@@ -121,15 +129,11 @@ const clearDevices = (device) => {
     }
 
     if (device) {
-        // 删除指定设备
-        console.log('删除指定设备', device)
-        bluetoothStore.clearConnectedDevices(device)
-        // TODO: 断开指定设备连接
+        bluetoothStore.removeConnectedDevice(device)
     } else {
-        // 删除所有设备
         bluetoothStore.clearConnectedDevices()
-        // TODO: 断开所有设备连接
     }
+    devices.value = [...bluetoothStore.connectedDevices]
 }
 
 const connectDevice = (device) => {
@@ -143,6 +147,7 @@ const connectDevice = (device) => {
     }
 
     bluetoothStore.addConnectedDevice(device)
+    devices.value = [...bluetoothStore.connectedDevices]
     scanDialogVisible.value = false
 }
 
@@ -166,7 +171,7 @@ const clearScanResults = () => {
 
 // 处理设备选择
 const handleDeviceSelect = (device) => {
-    bluetoothStore.selectedDevice.value = device
+    bluetoothStore.setSelectedDevice(device)
 }
 </script>
 
@@ -217,6 +222,7 @@ const handleDeviceSelect = (device) => {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer;
 }
 
 .device-info {
@@ -362,7 +368,7 @@ const handleDeviceSelect = (device) => {
 }
 
 .device-item.selected {
-    background-color: #ecf5ff;
+    background-color: color-mix(in srgb, var(--el-menu-hover-bg-color) 80%, rgb(129, 248, 222)) !important;;
     border-radius: 4px;
 }
 </style>

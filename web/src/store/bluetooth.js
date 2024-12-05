@@ -1,39 +1,50 @@
-import { linkHorizontal } from 'd3'
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
 
-export const useBluetoothStore = defineStore('bluetooth', () => {
-  // 状态
-  const connectedDevices = ref([])
-  const selectedDevice = ref(null)
+export const useBluetoothStore = defineStore('bluetooth', {
+    state: () => ({
+        centralDevice: null,
+        connectedDevices: [],
+        selectedDevice: null  // 添加选中设备的状态
+    }),
 
-  // actions
-  function addConnectedDevice(device) {
-    device.id = device.address // 使用地址作为ID
-    console.log(device)
-    connectedDevices.value.push(device)
-  }
+    actions: {
+        setCentralDevice(device) {
+            this.centralDevice = device
+        },
 
-  function clearConnectedDevices(device) {
-    if (device) {
-      connectedDevices.value = connectedDevices.value.filter(d => d.address !== device.address)
-    } else {
-      connectedDevices.value = []
-    }
-  }
+        addConnectedDevice(device) {
+            const existingDevice = this.connectedDevices.find(d => d.address === device.address)
+            if (!existingDevice) {
+                this.connectedDevices.push({
+                    ...device,
+                    type: 'peripheral'
+                })
+            }
+        },
 
-  function setSelectedDevice(device) {
-    console.log('setSelectedDevice', device)
-    selectedDevice.value = device
-  }
+        removeConnectedDevice(device) {
+            this.connectedDevices = this.connectedDevices.filter(d => d.address !== device.address)
+            if (this.selectedDevice?.address === device.address) {
+                this.selectedDevice = null
+            }
+        },
 
-  return {
-    // 状态
-    connectedDevices,
-    selectedDevice,
-    // actions
-    addConnectedDevice,
-    clearConnectedDevices,
-    setSelectedDevice,
-  }
+        clearConnectedDevices() {
+            this.connectedDevices = []
+            this.selectedDevice = null
+        },
+
+        setSelectedDevice(device) {
+            this.selectedDevice = device
+        },
+
+        updateDeviceRssi(address, rssi) {
+            const device = this.connectedDevices.find(d => d.address === address)
+            if (device) {
+                device.rssi = rssi
+            }
+        }
+    },
+
+    persist: true
 })

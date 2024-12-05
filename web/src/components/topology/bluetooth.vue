@@ -21,23 +21,24 @@ let simulation = null
 
 // 监听设备数据变化，更新拓扑图
 watch(() => props.devices, (newDevices) => {
-    if (svg) {
+    if (svg && simulation) {
         updateTopology(newDevices)
     }
 }, { deep: true })
 
 // 更新拓扑图的方法
 const updateTopology = (devices) => {
+    // 创建中心设备
+    const centralDevice = {
+        id: 'central',
+        name: 'Central Device',
+        type: 'central',
+        address: '00:11:22:33:44:55'
+    }
+
     // 创建节点和连接
     const nodes = [
-        //主机
-        { 
-            id: 'central',
-            name: 'Central Device',
-            type: 'central',
-            address: '00:11:22:33:44:55'
-        },
-        //从机
+        centralDevice,
         ...devices.map(d => ({
             ...d,
             type: 'peripheral'
