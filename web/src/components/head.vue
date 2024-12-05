@@ -1,7 +1,7 @@
 <template>
     <el-breadcrumb :separator-icon="ArrowRight">
         <el-breadcrumb-item 
-            v-for="(item, index) in store.breadcrumbs" 
+            v-for="(item, index) in breadcrumbsStore.breadcrumbs" 
             :key="index"
         >
             {{ item }}
@@ -18,7 +18,7 @@
 
 <script setup>
 import { ArrowRight } from '@element-plus/icons-vue'
-import { useStore } from '@/store'
+import { useBreadCrumbsStore } from '@/store/breadcrumbs'
 
-const store = useStore()
+const breadcrumbsStore = useBreadCrumbsStore()
 </script>

@@ -2,14 +2,9 @@
     <div class="bluetooth-container">
         <!-- 左侧已连接设备列表 -->
         <div class="device-list">
-            <!-- <div class="list-header">
-                <h3 class="list-title">已连接设备</h3>
-                <el-button :icon="DeleteFilled" circle="true" @click="clearDevices" />
-            </div> -->
-            <!-- 已连接设备列表 -->
             <div class="devices">
-                <div v-for="device in connectedDevices" :key="device.address" class="device-item"
-                    :class="{ 'selected': selectedDevice?.address === device.address }">
+                <div v-for="device in bluetoothStore.connectedDevices" :key="device.address" class="device-item"
+                    :class="{ 'selected': bluetoothStore.selectedDevice?.address === device.address }">
                     <div class="device-info">
                         <span class="device-name">{{ device.name || 'Unknown name' }}</span>
                         <span class="device-address">{{ device.address }}</span>
@@ -20,19 +15,20 @@
                                 <span>dBm</span>
                                 <span style="margin: 0 2px"></span>
                                 <div class="signal-bars" :style="{ width: signalStrength(device.rssi) }"></div>
-                            </div>                                                        
+                            </div>
                         </div>
                     </div>
-                    <el-button type="primary" size="small" @click="configureDevice(device)">
-                        Configure
-                    </el-button>
+                    <div>
+                        <el-button text circle :icon="Setting" @click="configureDevice(device)" />
+                        <el-button text circle :icon="DeleteFilled" @click="clearDevices(device)" />
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- 右侧拓扑图 -->
         <div class="topology-map">
-            <TopologyGraph :devices="connectedDevices" @openScanDialog="openScanDialog"
+            <TopologyGraph :devices="bluetoothStore.connectedDevices" @openScanDialog="openScanDialog"
                 @selectDevice="handleDeviceSelect" />
         </div>
 
@@ -40,7 +36,7 @@
         <el-dialog v-model="scanDialogVisible" title="Discovered devices" width="400px">
             <div class="scan-dialog-content">
                 <div class="scan-controls">
-                    <el-button type="primary" @click="startScan">Start scan</el-button>
+                    <el-button type="primary" @click="startScan">Scan</el-button>
                     <el-button @click="clearScanResults">Clear</el-button>
                 </div>
 
@@ -48,11 +44,6 @@
                     <el-checkbox v-model="sortBySignal">Sort by signal strength</el-checkbox>
                     <div class="filter-input">
                         <el-input v-model="filterText" placeholder="Device name or address" clearable />
-                    </div>
-                    <div class="scan-timeout">
-                        <span>Active scan</span>
-                        <el-switch v-model="activeScan" />
-                        <el-input-number v-model="timeout" :min="0" :max="300" size="small" />
                     </div>
                 </div>
 
@@ -80,19 +71,17 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { Refresh, Monitor, Setting, Delete, DeleteFilled } from '@element-plus/icons-vue'
+import { Setting, DeleteFilled } from '@element-plus/icons-vue'
 import TopologyGraph from '@/components/TopologyGraph.vue'
-
+import { useBluetoothStore } from '@/store/bluetooth'
+import { ElMessage } from 'element-plus'
 // 状态
 const sortBySignal = ref(true)
 const filterText = ref('')
-const activeScan = ref(true)
-const timeout = ref(0)
-const devices = ref([])
-const connectedDevices = ref([])
+const bluetoothStore = useBluetoothStore()
 const scanDialogVisible = ref(false)
 const discoveredDevices = ref([])
-const selectedDevice = ref(null)
+
 
 // 计算属性
 const filteredDevices = computed(() => {
@@ -125,16 +114,35 @@ const startScan = () => {
     ]
 }
 
-const clearDevices = () => {
-    devices.value = []
-    connectedDevices.value = []
-    // TODO:断开设备连接
+const clearDevices = (device) => {
+    if (bluetoothStore.connectedDevices.length === 0) {
+        ElMessage.warning('没有已连接的设备')
+        return
+    }
+
+    if (device) {
+        // 删除指定设备
+        console.log('删除指定设备', device)
+        bluetoothStore.clearConnectedDevices(device)
+        // TODO: 断开指定设备连接
+    } else {
+        // 删除所有设备
+        bluetoothStore.clearConnectedDevices()
+        // TODO: 断开所有设备连接
+    }
 }
 
 const connectDevice = (device) => {
     // 为设备添加唯一ID
     device.id = device.address // 使用地址作为ID
-    connectedDevices.value.push(device)
+    // 检查设备是否已存在
+    const existingDevice = bluetoothStore.connectedDevices.find(d => d.address === device.address)
+    if (existingDevice) {
+        ElMessage.warning('设备已连接')
+        return
+    }
+
+    bluetoothStore.addConnectedDevice(device)
     scanDialogVisible.value = false
 }
 
@@ -145,7 +153,6 @@ const configureDevice = (device) => {
 const signalStrength = (rssi) => {
     // 将 RSSI 转换为信号强度百分比
     const percent = Math.min(100, Math.max(0, (rssi + 100) * 2))
-    console.log(percent)
     return `${percent}%`
 }
 
@@ -159,7 +166,7 @@ const clearScanResults = () => {
 
 // 处理设备选择
 const handleDeviceSelect = (device) => {
-    selectedDevice.value = device
+    bluetoothStore.selectedDevice.value = device
 }
 </script>
 
@@ -183,8 +190,8 @@ const handleDeviceSelect = (device) => {
 
 .list-header {
     display: flex;
-    justify-content: space-evenly; 
-    align-items: center;  
+    justify-content: space-evenly;
+    align-items: center;
 }
 
 .scan-options {
@@ -229,7 +236,7 @@ const handleDeviceSelect = (device) => {
 
 .signal-strength {
     display: flex;
-    align-items: center;   
+    align-items: center;
     font-size: 12px;
     gap: 10px;
 }
@@ -237,7 +244,7 @@ const handleDeviceSelect = (device) => {
 .signal-text {
     min-width: 100px;
     display: flex;
-    align-items: center;    
+    align-items: center;
 }
 
 .signal-bars {
@@ -335,12 +342,6 @@ const handleDeviceSelect = (device) => {
     padding: 10px;
     background: #f5f7fa;
     border-radius: 4px;
-}
-
-.scan-timeout {
-    display: flex;
-    align-items: center;
-    gap: 10px;
 }
 
 .discovered-devices {

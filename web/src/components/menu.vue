@@ -57,11 +57,11 @@
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Connection, Switch, DataLine } from '@element-plus/icons-vue'
-import { useStore } from '@/store'
+import { useBreadCrumbsStore } from '@/store/breadcrumbs';
 
 const router = useRouter()
 const route = useRoute()
-const store = useStore()
+const store = useBreadCrumbsStore()
 
 // 使用路由路径作为激活菜单项
 const defaultActive = ref(route.path)

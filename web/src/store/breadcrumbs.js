@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
-export const useStore = defineStore('store', () => {
+export const useBreadCrumbsStore = defineStore('breadcrumbs', () => {
     // 存储面包屑路径
     const breadcrumbs = ref([''])
     
@@ -15,3 +15,4 @@ export const useStore = defineStore('store', () => {
         updateBreadcrumbs
     }
 })
+

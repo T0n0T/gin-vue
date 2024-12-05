@@ -30,12 +30,14 @@ watch(() => props.devices, (newDevices) => {
 const updateTopology = (devices) => {
     // 创建节点和连接
     const nodes = [
+        //主机
         { 
             id: 'central',
             name: 'Central Device',
             type: 'central',
             address: '00:11:22:33:44:55'
         },
+        //从机
         ...devices.map(d => ({
             ...d,
             type: 'peripheral'
