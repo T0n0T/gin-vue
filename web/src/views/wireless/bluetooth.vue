@@ -65,6 +65,13 @@
                 </div>
             </div>
         </el-dialog>
+
+        <!-- 添加配置弹窗组件 -->
+        <ConfigureDeviceDialog
+            v-model:visible="configDialogVisible"
+            :device="selectedConfigDevice"
+            @save="handleConfigSave"
+        />
     </div>
 </template>
 
@@ -74,6 +81,7 @@ import { Setting, DeleteFilled } from '@element-plus/icons-vue'
 import TopologyGraph from '@/components/topology/bluetooth.vue'
 import { useBluetoothStore } from '@/store/bluetooth'
 import { ElMessage } from 'element-plus'
+import ConfigureDeviceDialog from '@/components/bluetooth/ConfigureDeviceDialog.vue'
 
 // 状态
 const sortBySignal = ref(true)
@@ -82,6 +90,8 @@ const bluetoothStore = useBluetoothStore()
 const scanDialogVisible = ref(false)
 const discoveredDevices = ref([])
 const devices = ref([])
+const configDialogVisible = ref(false)
+const selectedConfigDevice = ref(null)
 
 // 计算属性
 const filteredDevices = computed(() => {
@@ -155,8 +165,8 @@ const connectDevice = (device) => {
 }
 
 const configureDevice = (device) => {
-    console.log('配置设备', device)
-    // 实现配置逻辑
+    selectedConfigDevice.value = device
+    configDialogVisible.value = true
 }
 
 const signalStrength = (rssi) => {
@@ -191,6 +201,12 @@ watch(scanDialogVisible, (newValue) => {
         stopScan()
     }
 })
+
+// 添加配置保存处理方法
+const handleConfigSave = (data) => {
+    console.log('保存设备配置:', data)
+    ElMessage.success('配置已保存')
+}
 </script>
 
 <style scoped>
