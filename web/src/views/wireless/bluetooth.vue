@@ -69,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { Setting, DeleteFilled } from '@element-plus/icons-vue'
 import TopologyGraph from '@/components/topology/bluetooth.vue'
 import { useBluetoothStore } from '@/store/bluetooth'
@@ -115,6 +115,7 @@ onMounted(() => {
 // 方法
 const startScan = () => {
     // 实现扫描逻辑
+    console.log('startScan')
     // 模拟发现设备
     discoveredDevices.value = [
         { name: 'Device 1', address: '00:11:22:33:44:55', rssi: -90 },
@@ -130,8 +131,10 @@ const clearDevices = (device) => {
 
     if (device) {
         bluetoothStore.removeConnectedDevice(device)
+        console.log('删除指定设备', device)
     } else {
         bluetoothStore.clearConnectedDevices()
+        console.log('删除所有设备')
     }
     devices.value = [...bluetoothStore.connectedDevices]
 }
@@ -145,13 +148,14 @@ const connectDevice = (device) => {
         ElMessage.warning('设备已连接')
         return
     }
-
+    console.log('添加设备', device)
     bluetoothStore.addConnectedDevice(device)
     devices.value = [...bluetoothStore.connectedDevices]
-    scanDialogVisible.value = false
+    // scanDialogVisible.value = false
 }
 
 const configureDevice = (device) => {
+    console.log('配置设备', device)
     // 实现配置逻辑
 }
 
@@ -173,6 +177,20 @@ const clearScanResults = () => {
 const handleDeviceSelect = (device) => {
     bluetoothStore.setSelectedDevice(device)
 }
+
+// 添加停止扫描方法
+const stopScan = () => {
+    // 实现停止扫描逻辑
+    console.log('stopScan')
+    // 这里添加实际停止扫描的代码
+}
+
+// 监听 dialog 关闭
+watch(scanDialogVisible, (newValue) => {
+    if (!newValue) {  // dialog 关闭时
+        stopScan()
+    }
+})
 </script>
 
 <style scoped>
