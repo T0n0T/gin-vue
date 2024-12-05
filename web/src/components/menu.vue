@@ -76,7 +76,7 @@ const handleSelect = (index) => {
         'wireless/wlan': ['无线配置', 'WLAN'],
         'wireless/lorawan': ['无线配置', 'LoRaWan'],
     }
-
+    defaultActive.value = index
     // 导航到对应路由
     router.push('/' + index)
 }
@@ -85,7 +85,6 @@ const handleSelect = (index) => {
 watch(
     () => route.path,
     (newPath) => {
-        defaultActive.value = newPath
         const menuText = {
             '/': [''],
             '/stats': ['数据统计'],

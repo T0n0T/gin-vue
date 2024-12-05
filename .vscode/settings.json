@@ -1,6 +1,3 @@
 {
-	"go.buildTags": "-tags 'dist'",
-	// "terminal.integrated.env.linux": {
-	// 	"EDITOR": "code"
-	// }
+	"go.buildTags": "-tags 'dist'"
 }
