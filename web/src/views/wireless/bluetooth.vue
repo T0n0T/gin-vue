@@ -1,34 +1,39 @@
 <template>
     <div class="bluetooth-container">
-        <!-- 左侧已连接设备列表 -->
-        <div class="device-list">
-            <div class="devices">
-                <div v-for="device in bluetoothStore.connectedDevices" :key="device.address" class="device-item"
-                    :class="{ 'selected': bluetoothStore.selectedDevice?.address === device.address }" @click="handleDeviceSelect(device)">
-                    <div class="device-info">
-                        <span class="device-name">{{ device.name || 'Unknown name' }}</span>
-                        <span class="device-address">{{ device.address }}</span>
-                        <div class="signal-strength">
-                            <div class="signal-text" style="width: 100px">
-                                <span>{{ device.rssi }}</span>
-                                <span style="margin: 0 2px"></span>
-                                <span>dBm</span>
-                                <span style="margin: 0 2px"></span>
-                                <div class="signal-bars" :style="{ width: signalStrength(device.rssi) }"></div>
+        <!-- 合并后的拓扑图容器 -->
+        <div class="topology-map">
+            <TopologyGraph :devices="devices" @openScanDialog="openScanDialog" @selectDevice="handleDeviceSelect" />
+            
+            <!-- 可滑动的设备列表面板 -->
+            <div class="sliding-panel" :class="{ 'panel-open': hasConnectedDevices }">
+                <div class="device-list">
+                    <div class="devices">
+                        <div v-for="device in bluetoothStore.connectedDevices" 
+                             :key="device.address" 
+                             class="device-item"
+                             :class="{ 'selected': bluetoothStore.selectedDevice?.address === device.address }" 
+                             @click="handleDeviceSelect(device)">
+                            <div class="device-info">
+                                <span class="device-name">{{ device.name || 'Unknown name' }}</span>
+                                <span class="device-address">{{ device.address }}</span>
+                                <div class="signal-strength">
+                                    <div class="signal-text" style="width: 100px">
+                                        <span>{{ device.rssi }}</span>
+                                        <span style="margin: 0 2px"></span>
+                                        <span>dBm</span>
+                                        <span style="margin: 0 2px"></span>
+                                        <div class="signal-bars" :style="{ width: signalStrength(device.rssi) }"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <el-button text circle :icon="Setting" @click="configureDevice(device)" />
+                                <el-button text circle :icon="DeleteFilled" @click="clearDevices(device)" />
                             </div>
                         </div>
                     </div>
-                    <div>
-                        <el-button text circle :icon="Setting" @click="configureDevice(device)" />
-                        <el-button text circle :icon="DeleteFilled" @click="clearDevices(device)" />
-                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- 右侧拓扑图 -->
-        <div class="topology-map">
-            <TopologyGraph :devices="devices" @openScanDialog="openScanDialog" @selectDevice="handleDeviceSelect" />
         </div>
 
         <!-- 添加搜索设备弹窗 -->
@@ -207,21 +212,49 @@ const handleConfigSave = (data) => {
     console.log('保存设备配置:', data)
     ElMessage.success('配置已保存')
 }
+
+// 添加计算属性判断是否有连接设备
+const hasConnectedDevices = computed(() => bluetoothStore.connectedDevices.length > 0)
 </script>
 
 <style scoped>
 .bluetooth-container {
-    display: flex;
-    height: 100%;
-    gap: 20px;
-    padding: 20px;
+    height: calc(100vh - 100px);
+    padding: 10px;
+    border-radius: 8px;
 }
 
-.device-list {
-    width: 300px;
-    background: #f5f7fa;
+.topology-map {
+    position: relative;
+    height: 100%;
     border-radius: 8px;
-    padding: 15px;
+    padding: 20px;
+    /* 隐藏滑动面板 */
+    overflow: hidden;
+}
+
+/* 滑动面板样式 */
+.sliding-panel {
+    position: absolute;
+    left: -300px; /* 初始状态隐藏 */
+    top: 10px;
+    bottom: 10px;    
+    width: 300px;
+    background: #f8fdff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    transition: left 0.3s ease;
+    border-right: 1px solid #bcc8e0;
+}
+
+.sliding-panel.panel-open {
+    left: 20px; /* 修改为20px，使其与拓扑图保持距离 */
+}
+
+/* 设备列表样式调整 */
+.device-list {
+    height: 100%;
+    padding: 15px;    
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -257,6 +290,9 @@ const handleConfigSave = (data) => {
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
+    background: white;
+    margin-bottom: 8px;
+    border-radius: 4px;
 }
 
 .device-info {

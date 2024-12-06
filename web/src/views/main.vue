@@ -26,18 +26,19 @@ import Head from '@/components/head.vue'
     /* background-color: #53ebca; */
     padding: 10px;
 }
-.aside {
-    background-color: #f9ffa2;
+.aside { 
+    /* height: inherit; */
+    background-color: #f9ff9e;
 }
 .container {
-    height: 100%;
     /* background-color: #25b97b; */
     overflow: hidden;
     border-radius: 10px;
     /* 防止溢出 */
 }
 .el-main {
-    /* padding: 0; */
+    padding: 20px;
+    height: 80%;
 }
 .el-header {
     background-color: var(--el-bg-color);

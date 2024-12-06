@@ -106,7 +106,7 @@ watch(
 
 <style scoped>
 .el-aside {
-    height: 100%;
+    height: inherit;
     overflow: hidden;
     border-radius: 10px;
     box-shadow: 8px 0 5px 1px rgba(3, 3, 92, 0.1);

@@ -141,21 +141,21 @@ const handleRouteSelect = (route) => {
 
 <style scoped>
 .router-container {
-    height: 100%;
-    padding: 20px;
-    position: relative;
+    height: calc(100vh - 100px);
+    padding: 10px;
+    border-radius: 8px;
 }
 
 .view-toggle-icon {
     position: fixed;
-    right: 160px;
+    right: 140px;
     bottom: 100px;
     z-index: 100;
     transform: scale(1.5);
 }
 
 .topology-view, .table-view {
-    height: calc(100% - 70px);
+    height: 100%;
     background: #f5f7fa;
     border-radius: 8px;
     padding: 20px;
@@ -163,7 +163,7 @@ const handleRouteSelect = (route) => {
 
 .add-button {
     position: fixed;
-    right: 100px;
+    right: 80px;
     bottom: 100px;
     z-index: 100;
     /* 增加按钮的大小 */
