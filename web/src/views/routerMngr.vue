@@ -41,12 +41,58 @@
         </div>
 
         <!-- 添加/编辑路由对话框 -->
-        <el-dialog
-            v-model="routeDialogVisible"
-            :title="editingRoute ? '编辑路由' : '添加路由'"
-            width="500px"
-        >
-            <div>表单内容待添加</div>
+        <el-dialog v-model="routeDialogVisible" :title="editingRoute ? '编辑路由' : '添加路由'" width="500px">
+            <el-form :model="RouteForm" :rules="rules" label-width="auto">
+                <el-form-item label="路由名称" prop="routerName">
+                    <el-input v-model="RouteForm.routerName" />
+                </el-form-item>
+                <el-form-item label="数据入口" style="width: 100%">
+                    <el-row :gutter="10">
+                        <el-col :span="24" style="margin-bottom: 10px">
+                            <el-form-item prop="input.type">
+                                <el-select 
+                                    v-model="RouteForm.input.type" 
+                                    placeholder="选择类型"
+                                    @change="() => RouteForm.input.connectionId = ''"
+                                    style="width: 100%"
+                                >
+                                    <el-option label="蓝牙" value="bluetooth" />
+                                    <el-option label="网络连接" value="network" />
+                                </el-select>
+                            </el-form-item>
+                        </el-col>
+                        <el-col :span="24">
+                            <el-form-item prop="input.connectionId">
+                                <el-select 
+                                    v-model="RouteForm.input.connectionId"
+                                    filterable
+                                    placeholder="请选择连接ID"
+                                    :disabled="!RouteForm.input.type"
+                                    style="width: 100%"
+                                >
+                                    <el-option
+                                        v-for="conn in filteredConnections"
+                                        :key="conn.id"
+                                        :label="conn.id"
+                                        :value="conn.id"
+                                    >
+                                        <span>ID: {{ conn.id }}</span>
+                                        <span style="float: right; color: #8492a6; font-size: 13px">
+                                            {{ conn.type === 'bluetooth' ? conn.name : conn.address }}
+                                        </span>
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
+                </el-form-item>
+                <el-form-item label="数据出口" prop="output.type">
+                    <el-select v-model="RouteForm.output.type" placeholder="请选择数据出口类型">
+                        <el-option label="蓝牙" value="bluetooth" />
+                        <el-option label="网络连接" value="network" />
+                    </el-select>
+                </el-form-item>
+            </el-form>
             <template #footer>
                 <el-button @click="routeDialogVisible = false">取消</el-button>
                 <el-button type="primary" @click="saveRoute">确定</el-button>
@@ -60,24 +106,28 @@ import { ref, computed, reactive } from 'vue'
 import { Plus, Grid, View } from '@element-plus/icons-vue'
 import RouterTopology from '@/components/topology/routerMngr.vue'
 import { ElMessage } from 'element-plus'
+import { useConnectionStore } from '@/store/connect'
+import { storeToRefs } from 'pinia'
 
 const isTopologyView = ref(true)
 const routes = ref([])
 const routeDialogVisible = ref(false)
 const editingRoute = ref(null)
 
-const routeForm = reactive({
-    name: '',
-    input: {
+const RouteForm = ref({
+    routerName: '',
+    input: { 
         type: '',
+        connectionId: '' 
     },
-    output: {
+    output: { 
         type: '',
+        connectionId: '' 
     }
 })
 
 const rules = {
-    name: [{ required: true, message: '请输入路由名称', trigger: 'blur' }],
+    routerName: [{ required: true, message: '请输入路由名称', trigger: 'blur' }],
     'input.type': [{ required: true, message: '请选择数据入口类型', trigger: 'change' }],
     'output.type': [{ required: true, message: '请选择数据出口类型', trigger: 'change' }]
 }
@@ -98,10 +148,10 @@ const getInterfaceTypeName = (type) => {
 
 const openRouteDialog = () => {
     editingRoute.value = null
-    routeForm.value = {
-        name: '',
+    RouteForm.value = {
+        routerName: '',
         input: { type: '' },
-        output: { type: ''}
+        output: { type: '' }
     }
     routeDialogVisible.value = true
 }
@@ -109,15 +159,15 @@ const openRouteDialog = () => {
 const saveRoute = () => {
     console.log("saveRoute")
     if (editingRoute.value) {
-        // const index = routes.value.findIndex(r => r.id === editingRoute.value.id)
-        // if (index !== -1) {
-        //     routes.value[index] = { ...routeForm.value, id: editingRoute.value.id }
-        // }
+        const index = routes.value.findIndex(r => r.id === editingRoute.value.id)
+        if (index !== -1) {
+            routes.value[index] = { ...RouteForm.value, id: editingRoute.value.id }
+        }
     } else {
-        // routes.value.push({
-        //     ...routeForm.value,
-        //     id: Date.now().toString()
-        // })
+        routes.value.push({
+            ...RouteForm.value,
+            id: Date.now().toString()
+        })
     }
     routeDialogVisible.value = false
     ElMessage.success(editingRoute.value ? '路由已更新' : '路由已添加')
@@ -125,7 +175,7 @@ const saveRoute = () => {
 
 const editRoute = (route) => {
     editingRoute.value = route
-    // routeForm.value = { ...route }
+    RouteForm.value = { ...route }
     routeDialogVisible.value = true
 }
 
@@ -137,6 +187,37 @@ const deleteRoute = (route) => {
 const handleRouteSelect = (route) => {
     console.log('选中路由:', route)
 }
+
+// 获取连接store
+const connectionStore = useConnectionStore()
+const { bluetoothConnections, networkConnections } = storeToRefs(connectionStore)
+
+// 计算所有可用连接
+const availableConnections = computed(() => {
+    return [
+        ...bluetoothConnections.value.map(conn => ({
+            value: `bluetooth:${conn.id}`,
+            label: `蓝牙: ${conn.name}`,
+            type: 'bluetooth',
+            detail: conn
+        })),
+        ...networkConnections.value.map(conn => ({
+            value: `network:${conn.id}`,
+            label: `网络: ${conn.address}`,
+            type: 'network',
+            detail: conn
+        }))
+    ]
+})
+
+// 根据选择的类型过滤连接
+const filteredConnections = computed(() => {
+    if (!RouteForm.value.input.type) return []
+    
+    return RouteForm.value.input.type === 'bluetooth' 
+        ? bluetoothConnections.value
+        : networkConnections.value
+})
 </script>
 
 <style scoped>
@@ -154,7 +235,8 @@ const handleRouteSelect = (route) => {
     transform: scale(1.5);
 }
 
-.topology-view, .table-view {
+.topology-view,
+.table-view {
     height: 100%;
     background: #f5f7fa;
     border-radius: 8px;
