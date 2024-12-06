@@ -77,12 +77,14 @@
             :device="selectedConfigDevice"
             @save="handleConfigSave"
         />
+        <el-button class="add-button" circle type="primary" :icon="Plus" @click="openScanDialog" />
+        <el-button class="del-button" circle type="primary" :icon="DeleteFilled" @click="clearDevices()" />
     </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { Setting, DeleteFilled } from '@element-plus/icons-vue'
+import { Setting, Plus, DeleteFilled } from '@element-plus/icons-vue'
 import TopologyGraph from '@/components/topology/bluetooth.vue'
 import { useBluetoothStore } from '@/store/bluetooth'
 import { ElMessage } from 'element-plus'
@@ -285,7 +287,8 @@ const hasConnectedDevices = computed(() => bluetoothStore.connectedDevices.lengt
 
 .device-item {
     padding: 10px;
-    border-bottom: 1px solid #eee;
+    border: 1px solid #ddd;
+    border-bottom: 4px solid #eee;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -441,4 +444,23 @@ const hasConnectedDevices = computed(() => bluetoothStore.connectedDevices.lengt
     background-color: color-mix(in srgb, var(--el-menu-hover-bg-color) 80%, rgb(129, 248, 222)) !important;;
     border-radius: 4px;
 }
+
+.add-button {
+    position: fixed;
+    right: 140px;
+    bottom: 100px;
+    z-index: 100;
+    /* 增加按钮的大小 */
+    transform: scale(1.5);
+}
+
+.del-button {
+    position: fixed;
+    right: 80px;
+    bottom: 100px;
+    z-index: 100;
+    /* 增加按钮的大小 */
+    transform: scale(1.5);
+}
+
 </style>
