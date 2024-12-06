@@ -117,7 +117,7 @@ watch(
 
 /* 确保菜单占满 el-aside 的高度 */
 .el-menu-vertical {
-    height: 100%;
+    height: 100vh;
     width: 100%;
     overflow-y: auto;
     overflow-x: hidden;
