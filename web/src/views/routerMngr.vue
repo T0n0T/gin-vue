@@ -46,9 +46,9 @@
                 <el-form-item label="路由名称" prop="routerName">
                     <el-input v-model="RouteForm.routerName" />
                 </el-form-item>
-                <el-form-item label="数据入口" style="width: 100%">
-                    <el-row :gutter="10">
-                        <el-col :span="24" style="margin-bottom: 10px">
+                <el-form-item label="数据入口" >
+                    <el-row style="width: 100%">
+                        <el-col :span="7">
                             <el-form-item prop="input.type">
                                 <el-select 
                                     v-model="RouteForm.input.type" 
@@ -61,7 +61,9 @@
                                 </el-select>
                             </el-form-item>
                         </el-col>
-                        <el-col :span="24">
+                        <el-col :span="1">
+                    </el-col>
+                        <el-col :span="16">
                             <el-form-item prop="input.connectionId">
                                 <el-select 
                                     v-model="RouteForm.input.connectionId"
@@ -71,7 +73,7 @@
                                     style="width: 100%"
                                 >
                                     <el-option
-                                        v-for="conn in filteredConnections"
+                                        v-for="conn in filteredInputConnections"
                                         :key="conn.id"
                                         :label="conn.id"
                                         :value="conn.id"
@@ -86,11 +88,47 @@
                         </el-col>
                     </el-row>
                 </el-form-item>
-                <el-form-item label="数据出口" prop="output.type">
-                    <el-select v-model="RouteForm.output.type" placeholder="请选择数据出口类型">
+                <el-form-item label="数据出口">
+                    <el-row style="width: 100%">
+                        <el-col :span="7">
+                            <el-form-item prop="output.type">
+                                <el-select 
+                                    v-model="RouteForm.output.type" 
+                                    placeholder="请选择数据出口类型"
+                                    @change="() => RouteForm.output.connectionId = ''"
+                                    style="width: 100%"
+                                >
                         <el-option label="蓝牙" value="bluetooth" />
                         <el-option label="网络连接" value="network" />
                     </el-select>
+                </el-form-item>
+                        </el-col>
+                        <el-col :span="1">
+                        </el-col>
+                        <el-col :span="16">
+                            <el-form-item prop="output.connectionId">
+                                <el-select 
+                                    v-model="RouteForm.output.connectionId"
+                                    filterable
+                                    placeholder="请选择连接ID"
+                                    :disabled="!RouteForm.output.type"
+                                    style="width: 100%"
+                                >
+                                    <el-option
+                                        v-for="conn in filteredOutputConnections"
+                                        :key="conn.id"
+                                        :label="conn.id"
+                                        :value="conn.id"
+                                    >
+                                        <span>ID: {{ conn.id }}</span>
+                                        <span style="float: right; color: #8492a6; font-size: 13px">
+                                            {{ conn.type === 'bluetooth' ? conn.name : conn.address }}
+                                        </span>
+                                    </el-option>
+                                </el-select>
+                            </el-form-item>
+                        </el-col>
+                    </el-row>
                 </el-form-item>
             </el-form>
             <template #footer>
@@ -210,11 +248,20 @@ const availableConnections = computed(() => {
     ]
 })
 
-// 根据选择的类型过滤连接
-const filteredConnections = computed(() => {
+// 为输入连接过滤
+const filteredInputConnections = computed(() => {
     if (!RouteForm.value.input.type) return []
     
     return RouteForm.value.input.type === 'bluetooth' 
+        ? bluetoothConnections.value
+        : networkConnections.value
+})
+
+// 为输出连接过滤
+const filteredOutputConnections = computed(() => {
+    if (!RouteForm.value.output.type) return []
+    
+    return RouteForm.value.output.type === 'bluetooth' 
         ? bluetoothConnections.value
         : networkConnections.value
 })
