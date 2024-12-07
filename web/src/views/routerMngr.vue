@@ -17,13 +17,17 @@
                 <el-table-column prop="input.type" label="数据入口">
                     <template #default="{ row }">
                         <el-tag>{{ getInterfaceTypeName(row.input.type) }}</el-tag>
-                        <div class="interface-detail">{{ row.input.detail }}</div>
+                        <div class="interface-detail">
+                            {{ row.input.type === 'bluetooth' ? row.input.name : row.input.address }}
+                        </div>
                     </template>
                 </el-table-column>
                 <el-table-column prop="output.type" label="数据出口">
                     <template #default="{ row }">
                         <el-tag>{{ getInterfaceTypeName(row.output.type) }}</el-tag>
-                        <div class="interface-detail">{{ row.output.detail }}</div>
+                        <div class="interface-detail">
+                            {{ row.output.type === 'bluetooth' ? row.output.name : row.output.address }}
+                        </div>
                     </template>
                 </el-table-column>
                 <el-table-column label="操作" width="150">
@@ -140,6 +144,11 @@
 </template>
 
 <script setup>
+/**
+ * @file 路由管理页面组件
+ * @description 提供路由的管理功能，包括添加、编辑、删除路由，以及拓扑图和表格两种视图的切换
+ */
+
 import { ref, computed, reactive } from 'vue'
 import { Plus, Grid, View } from '@element-plus/icons-vue'
 import RouterTopology from '@/components/topology/routerMngr.vue'
@@ -147,11 +156,29 @@ import { ElMessage } from 'element-plus'
 import { useConnectionStore } from '@/store/connect'
 import { storeToRefs } from 'pinia'
 
+/**
+ * @type {import('vue').Ref<boolean>} 是否显示拓扑图视图
+ */
 const isTopologyView = ref(true)
+
+/**
+ * @type {import('vue').Ref<Array>} 路由列表
+ */
 const routes = ref([])
+
+/**
+ * @type {import('vue').Ref<boolean>} 路由对话框是否可见
+ */
 const routeDialogVisible = ref(false)
+
+/**
+ * @type {import('vue').Ref<Object|null>} 当前正在编辑的路由
+ */
 const editingRoute = ref(null)
 
+/**
+ * @type {import('vue').Ref<Object>} 路由表单数据
+ */
 const RouteForm = ref({
     routerName: '',
     input: { 
@@ -164,18 +191,30 @@ const RouteForm = ref({
     }
 })
 
+/**
+ * @type {Object} 表单验证规则
+ */
 const rules = {
     routerName: [{ required: true, message: '请输入路由名称', trigger: 'blur' }],
-    'input.type': [{ required: true, message: '请选择数据入口类型', trigger: 'change' }],
-    'output.type': [{ required: true, message: '请选择数据出口类型', trigger: 'change' }]
 }
 
+/**
+ * @type {import('vue').ComputedRef<string>} 视图切换图标
+ */
 const viewIcon = computed(() => isTopologyView.value ? Grid : View)
 
+/**
+ * @description 切换视图模式
+ */
 const toggleView = () => {
     isTopologyView.value = !isTopologyView.value
 }
 
+/**
+ * @description 获取接口类型的显示名称
+ * @param {string} type 接口类型
+ * @returns {string} 显示名称
+ */
 const getInterfaceTypeName = (type) => {
     const types = {
         bluetooth: '蓝牙',
@@ -184,6 +223,9 @@ const getInterfaceTypeName = (type) => {
     return types[type] || type
 }
 
+/**
+ * @description 打开路由对话框
+ */
 const openRouteDialog = () => {
     editingRoute.value = null
     RouteForm.value = {
@@ -194,8 +236,10 @@ const openRouteDialog = () => {
     routeDialogVisible.value = true
 }
 
+/**
+ * @description 保存路由
+ */
 const saveRoute = () => {
-    console.log("saveRoute")
     if (editingRoute.value) {
         const index = routes.value.findIndex(r => r.id === editingRoute.value.id)
         if (index !== -1) {
@@ -211,17 +255,29 @@ const saveRoute = () => {
     ElMessage.success(editingRoute.value ? '路由已更新' : '路由已添加')
 }
 
+/**
+ * @description 编辑路由
+ * @param {Object} route 要编辑的路由对象
+ */
 const editRoute = (route) => {
     editingRoute.value = route
     RouteForm.value = { ...route }
     routeDialogVisible.value = true
 }
 
+/**
+ * @description 删除路由
+ * @param {Object} route 要删除的路由对象
+ */
 const deleteRoute = (route) => {
     routes.value = routes.value.filter(r => r.id !== route.id)
     ElMessage.success('路由已删除')
 }
 
+/**
+ * @description 处理路由选择事件
+ * @param {Object} route 选中的路由对象
+ */
 const handleRouteSelect = (route) => {
     console.log('选中路由:', route)
 }
@@ -230,7 +286,9 @@ const handleRouteSelect = (route) => {
 const connectionStore = useConnectionStore()
 const { bluetoothConnections, networkConnections } = storeToRefs(connectionStore)
 
-// 计算所有可用连接
+/**
+ * @type {import('vue').ComputedRef<Array>} 所有可用的连接列表
+ */
 const availableConnections = computed(() => {
     return [
         ...bluetoothConnections.value.map(conn => ({
@@ -248,19 +306,21 @@ const availableConnections = computed(() => {
     ]
 })
 
-// 为输入连接过滤
+/**
+ * @type {import('vue').ComputedRef<Array>} 过滤后的输入连接列表
+ */
 const filteredInputConnections = computed(() => {
     if (!RouteForm.value.input.type) return []
-    
     return RouteForm.value.input.type === 'bluetooth' 
         ? bluetoothConnections.value
         : networkConnections.value
 })
 
-// 为输出连接过滤
+/**
+ * @type {import('vue').ComputedRef<Array>} 过滤后的输出连接列表
+ */
 const filteredOutputConnections = computed(() => {
     if (!RouteForm.value.output.type) return []
-    
     return RouteForm.value.output.type === 'bluetooth' 
         ? bluetoothConnections.value
         : networkConnections.value

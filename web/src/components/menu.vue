@@ -57,17 +57,39 @@
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Connection, Switch, DataLine } from '@element-plus/icons-vue'
-import { useBreadCrumbsStore } from '@/store/breadcrumbs';
+import { useBreadCrumbsStore } from '@/store/breadcrumbs'
 
+/**
+ * @typedef {Object} MenuPath
+ * @property {string} path - 路由路径
+ * @property {string[]} breadcrumbs - 对应的面包屑文本数组
+ */
+
+/**
+ * @type {import('vue-router').Router} 
+ */
 const router = useRouter()
+
+/**
+ * @type {import('vue-router').RouteLocationNormalizedLoaded} 
+ */
 const route = useRoute()
+
+/**
+ * @type {import('pinia').Store} 
+ */
 const store = useBreadCrumbsStore()
 
-// 使用路由路径作为激活菜单项
+/**
+ * @type {import('vue').Ref<string>} 当前激活的菜单项
+ */
 const defaultActive = ref(route.path)
 
+/**
+ * 菜单项选择处理函数
+ * @param {string} index - 被选中菜单项的索引
+ */
 const handleSelect = (index) => {
-    // 使用路由路径作为菜单索引
     const menuText = {
         '/': [''],
         'stats': ['数据统计'],
@@ -77,22 +99,29 @@ const handleSelect = (index) => {
         'wireless/lorawan': ['无线配置', 'LoRaWan'],
     }
     defaultActive.value = index
-    // 导航到对应路由
     router.push('/' + index)
 }
 
-// 监听路由变化，更新面包屑
+/**
+ * 监听路由变化，更新面包屑
+ * @type {Object.<string, string[]>} menuText - 路径到面包屑的映射
+ */
+const menuText = {
+    '/': [''],
+    '/stats': ['数据统计'],
+    '/router': ['路由配置'],
+    '/wireless/bluetooth': ['无线配置', 'Bluetooth'],
+    '/wireless/wlan': ['无线配置', 'WLAN'],
+    '/wireless/lorawan': ['无线配置', 'LoRaWan'],
+}
+
 watch(
     () => route.path,
+    /**
+     * 路由变化处理函数
+     * @param {string} newPath - 新的路由路径
+     */
     (newPath) => {
-        const menuText = {
-            '/': [''],
-            '/stats': ['数据统计'],
-            '/router': ['路由配置'],
-            '/wireless/bluetooth': ['无线配置', 'Bluetooth'],
-            '/wireless/wlan': ['无线配置', 'WLAN'],
-            '/wireless/lorawan': ['无线配置', 'LoRaWan'],
-        }
         if (menuText.hasOwnProperty(newPath)) {
             store.updateBreadcrumbs(menuText[newPath])
         } else {
@@ -145,7 +174,7 @@ watch(
     width: calc(100% - 20px);
 }
 
-/* 子菜单项的样式 */
+/* 子菜单项��样式 */
 :deep(.el-sub-menu .el-menu-item) {
     min-width: unset !important;
     /* 覆盖默认的最小宽度 */

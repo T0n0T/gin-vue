@@ -46,11 +46,37 @@
 <script setup>
 import { ref, defineProps, defineEmits, watch } from 'vue'
 
+/**
+ * @typedef {Object} BluetoothDevice
+ * @property {string} name - 蓝牙设备名称
+ * @property {string} address - 蓝牙设备MAC地址
+ * @property {number} rssi - 信号强度(dBm)
+ */
+
+/**
+ * @typedef {Object} DeviceConfig
+ * @property {number} timeout - 连接超时时间(秒)
+ * @property {boolean} autoReconnect - 是否自动重连
+ * @property {boolean} notifications - 是否启用通知
+ */
+
+/**
+ * @type {import('vue').PropType<{
+ *   visible: boolean,
+ *   device: BluetoothDevice
+ * }>}
+ */
 const props = defineProps({
   visible: Boolean,
   device: Object
 })
 
+/**
+ * @type {import('vue').EmitFn<{
+ *   'update:visible': [boolean],
+ *   'save': [{device: BluetoothDevice, config: DeviceConfig}]
+ * }>}
+ */
 const emit = defineEmits(['update:visible', 'save'])
 
 const dialogVisible = ref(props.visible)
@@ -70,10 +96,16 @@ watch(dialogVisible, (newVal) => {
   emit('update:visible', newVal)
 })
 
+/**
+ * 关闭配置对话框
+ */
 const closeDialog = () => {
   dialogVisible.value = false
 }
 
+/**
+ * 保存设备配置并关闭对话框
+ */
 const saveConfig = () => {
   emit('save', {
     device: props.device,

@@ -83,6 +83,11 @@
 </template>
 
 <script setup>
+/**
+ * @file 蓝牙管理页面组件
+ * @description 提供蓝牙设备的扫描、连接、配置等功能，包括拓扑图展示和设备列表管理
+ */
+
 import { ref, computed, onMounted, watch } from 'vue'
 import { Setting, Plus, DeleteFilled } from '@element-plus/icons-vue'
 import TopologyGraph from '@/components/topology/bluetooth.vue'
@@ -90,21 +95,49 @@ import { useBluetoothStore } from '@/store/bluetooth'
 import { ElMessage } from 'element-plus'
 import ConfigureDeviceDialog from '@/components/bluetooth/ConfigureDeviceDialog.vue'
 
-// 状态
+/**
+ * @type {import('vue').Ref<boolean>} 是否按信号强度排序
+ */
 const sortBySignal = ref(true)
+
+/**
+ * @type {import('vue').Ref<string>} 过滤文本
+ */
 const filterText = ref('')
+
 const bluetoothStore = useBluetoothStore()
+
+/**
+ * @type {import('vue').Ref<boolean>} 扫描对话框是否可见
+ */
 const scanDialogVisible = ref(false)
+
+/**
+ * @type {import('vue').Ref<Array>} 发现的设备列表
+ */
 const discoveredDevices = ref([])
+
+/**
+ * @type {import('vue').Ref<Array>} 设备列表
+ */
 const devices = ref([])
+
+/**
+ * @type {import('vue').Ref<boolean>} 配置对话框是否可见
+ */
 const configDialogVisible = ref(false)
+
+/**
+ * @type {import('vue').Ref<Object|null>} 选中的配置设备
+ */
 const selectedConfigDevice = ref(null)
 
-// 计算属性
+/**
+ * @type {import('vue').ComputedRef<Array>} 过滤后的设备列表
+ */
 const filteredDevices = computed(() => {
     let filtered = [...discoveredDevices.value]
 
-    // 应用过滤
     if (filterText.value) {
         const searchText = filterText.value.toLowerCase()
         filtered = filtered.filter(device =>
@@ -113,7 +146,6 @@ const filteredDevices = computed(() => {
         )
     }
 
-    // 按信号强度排序
     if (sortBySignal.value) {
         filtered.sort((a, b) => b.rssi - a.rssi)
     }
@@ -129,9 +161,89 @@ onMounted(() => {
     }
 })
 
-// 方法
+/**
+ * @description 连接蓝牙设备
+ * @param {Object} device - 要连接的设备
+ * @param {string} device.address - 设备MAC地址
+ * @param {string} [device.name] - 设备名称
+ * @param {number} device.rssi - 信号强度
+ * @throws {ElMessage} 当设备已连接时，显示警告消息
+ */
+const connectDevice = (device) => {
+    device.id = device.address
+    const existingDevice = bluetoothStore.connectedDevices.find(d => d.address === device.address)
+    if (existingDevice) {
+        ElMessage.warning('设备已连接')
+        return
+    }
+    console.log('添加设备', device)
+    bluetoothStore.addConnectedDevice(device)
+    devices.value = [...bluetoothStore.connectedDevices]
+}
+
+/**
+ * @description 打开设备配置对话框
+ * @param {Object} device - 要配置的设备
+ */
+const configureDevice = (device) => {
+    selectedConfigDevice.value = device
+    configDialogVisible.value = true
+}
+
+/**
+ * @description 计算信号强度的显示百分比
+ * @param {number} rssi - 接收信号强度指示（RSSI）值，单位dBm
+ * @returns {string} 信号强度百分比，格式为 "xx%"
+ */
+const signalStrength = (rssi) => {
+    const percent = Math.min(100, Math.max(0, (rssi + 100) * 2))
+    return `${percent}%`
+}
+
+/**
+ * @description 打开扫描对话框
+ */
+const openScanDialog = () => {
+    scanDialogVisible.value = true
+}
+
+/**
+ * @description 清除扫描结果列表
+ */
+const clearScanResults = () => {
+    discoveredDevices.value = []
+}
+
+/**
+ * @description 处理设备选择事件
+ * @param {Object} device - 选中的设备
+ */
+const handleDeviceSelect = (device) => {
+    bluetoothStore.setSelectedDevice(device)
+}
+
+/**
+ * @description 停止扫描蓝牙设备
+ */
+const stopScan = () => {
+    console.log('stopScan')
+}
+
+/**
+ * @description 处理配置保存事件
+ * @param {Object} data - 设备配置数据
+ */
+const handleConfigSave = (data) => {
+    console.log('保存设备配置:', data)
+    ElMessage.success('配置已保存')
+}
+
+/**
+ * @description 开始扫描蓝牙设备
+ * @returns {void}
+ * @todo 实现实际的扫描逻辑
+ */
 const startScan = () => {
-    // 实现扫描逻辑
     console.log('startScan')
     // 模拟发现设备
     discoveredDevices.value = [
@@ -140,6 +252,26 @@ const startScan = () => {
     ]
 }
 
+/**
+ * @type {import('vue').ComputedRef<boolean>} 是否有已连接的设备
+ */
+const hasConnectedDevices = computed(() => bluetoothStore.connectedDevices.length > 0)
+
+// 监听对话框关闭
+watch(scanDialogVisible, (newValue) => {
+    if (!newValue) {
+        stopScan()
+    }
+})
+
+/**
+ * @description 清除蓝牙设备
+ * @param {Object} [device] - 要清除的特定设备。如果不提供，则清除所有设备
+ * @param {string} device.id - 设备ID
+ * @param {string} device.address - 设备MAC地址
+ * @param {string} device.name - 设备名称
+ * @throws {ElMessage} 当没有已连接的设备时，显示警告消息
+ */
 const clearDevices = (device) => {
     if (bluetoothStore.connectedDevices.length === 0) {
         ElMessage.warning('没有已连接的设备')
@@ -155,68 +287,6 @@ const clearDevices = (device) => {
     }
     devices.value = [...bluetoothStore.connectedDevices]
 }
-
-const connectDevice = (device) => {
-    // 为设备添加唯一ID
-    device.id = device.address // 使用地址作为ID
-    // 检查设备是否已存在
-    const existingDevice = bluetoothStore.connectedDevices.find(d => d.address === device.address)
-    if (existingDevice) {
-        ElMessage.warning('设备已连接')
-        return
-    }
-    console.log('添加设备', device)
-    bluetoothStore.addConnectedDevice(device)
-    devices.value = [...bluetoothStore.connectedDevices]
-    // scanDialogVisible.value = false
-}
-
-const configureDevice = (device) => {
-    selectedConfigDevice.value = device
-    configDialogVisible.value = true
-}
-
-const signalStrength = (rssi) => {
-    // 将 RSSI 转换为信号强度百分比
-    const percent = Math.min(100, Math.max(0, (rssi + 100) * 2))
-    return `${percent}%`
-}
-
-const openScanDialog = () => {
-    scanDialogVisible.value = true
-}
-
-const clearScanResults = () => {
-    discoveredDevices.value = []
-}
-
-// 处理设备选择
-const handleDeviceSelect = (device) => {
-    bluetoothStore.setSelectedDevice(device)
-}
-
-// 添加停止扫描方法
-const stopScan = () => {
-    // 实现停止扫描逻辑
-    console.log('stopScan')
-    // 这里添加实际停止扫描的代码
-}
-
-// 监听 dialog 关闭
-watch(scanDialogVisible, (newValue) => {
-    if (!newValue) {  // dialog 关闭时
-        stopScan()
-    }
-})
-
-// 添加配置保存处理方法
-const handleConfigSave = (data) => {
-    console.log('保存设备配置:', data)
-    ElMessage.success('配置已保存')
-}
-
-// 添加计算属性判断是否有连接设备
-const hasConnectedDevices = computed(() => bluetoothStore.connectedDevices.length > 0)
 </script>
 
 <style scoped>

@@ -3,32 +3,64 @@
 </template>
 
 <script setup>
+/**
+ * @file 蓝牙拓扑图组件
+ * @description 使用D3.js实现的蓝牙设备拓扑图可视化组件，展示中心设备与周边设备的连接关系
+ */
+
 import { onMounted, ref, watch } from 'vue'
 import * as d3 from 'd3'
 
+/**
+ * @typedef {Object} Device
+ * @property {string} id - 设备ID
+ * @property {string} name - 设备名称
+ * @property {string} address - MAC地址
+ * @property {number} rssi - 信号强度(dBm)
+ * @property {'central'|'peripheral'} [type] - 设备类型
+ */
+
+/**
+ * @typedef {Object} Link
+ * @property {string} source - 源设备ID
+ * @property {string} target - 目标设备ID
+ * @property {number} rssi - 连接信号强度
+ */
+
 const props = defineProps({
+    /** @type {Device[]} */
     devices: {
         type: Array,
         default: () => []
     }
 })
 
-const emit = defineEmits(['openScanDialog', 'selectDevice'])
-
+/** @type {import('vue').Ref<HTMLElement|null>} */
 const graphContainer = ref(null)
+
+/** @type {d3.Selection} */
 let svg = null
+
+/** @type {d3.Simulation} */
 let simulation = null
 
-// 监听设备数据变化，更新拓扑图
+/**
+ * 监听设备数据变化，更新拓扑图
+ * @param {Device[]} newDevices - 新的设备列表
+ */
 watch(() => props.devices, (newDevices) => {
     if (svg && simulation) {
         updateTopology(newDevices)
     }
 }, { deep: true })
 
-// 更新拓扑图的方法
+/**
+ * 更新拓扑图
+ * @param {Device[]} devices - 设备列表
+ * @returns {void}
+ */
 const updateTopology = (devices) => {
-    // 创建中心设备
+    /** @type {Device} */
     const centralDevice = {
         id: 'central',
         name: 'Central Device',
@@ -36,7 +68,7 @@ const updateTopology = (devices) => {
         address: '00:11:22:33:44:55'
     }
 
-    // 创建节点和连接
+    /** @type {Device[]} */
     const nodes = [
         centralDevice,
         ...devices.map(d => ({
@@ -45,49 +77,63 @@ const updateTopology = (devices) => {
         }))
     ]
     
+    /** @type {Link[]} */
     const links = devices.map(d => ({
         source: 'central',
         target: d.id || d.address,
         rssi: d.rssi
     }))
 
-    // 更新力导向图
     simulation.nodes(nodes)
     simulation.force('link').links(links)
     simulation.alpha(1).restart()
 
-    // 更新视图
     updateNodes(nodes)
     updateLinks(links)
 }
 
-// 添加拖拽相关的函数
+/**
+ * 处理拖拽开始事件
+ * @param {d3.D3DragEvent<any, Device, any>} event - D3拖拽事件
+ * @param {Device} d - 节点数据
+ */
 const dragstarted = (event, d) => {
     if (!event.active) simulation.alphaTarget(0.3).restart()
     d.fx = d.x
     d.fy = d.y
 }
 
+/**
+ * 处理拖拽过程事件
+ * @param {d3.D3DragEvent<any, Device, any>} event - D3拖拽事件
+ * @param {Device} d - 节点数据
+ */
 const dragged = (event, d) => {
     d.fx = event.x
     d.fy = event.y
 }
 
+/**
+ * 处理拖拽结束事件
+ * @param {d3.D3DragEvent<any, Device, any>} event - D3拖拽事件
+ * @param {Device} d - 节点数据
+ */
 const dragended = (event, d) => {
     if (!event.active) simulation.alphaTarget(0)
     d.fx = null
     d.fy = null
 }
 
+/**
+ * 更新节点视图
+ * @param {Device[]} nodes - 节点数据数组
+ */
 const updateNodes = (nodes) => {
-    // 更新节点组
     const node = svg.selectAll('g.node')
         .data(nodes, d => d.id || d.address)
 
-    // 删除旧节点
     node.exit().remove()
 
-    // 添加新节点
     const nodeEnter = node.enter()
         .append('g')
         .attr('class', 'node')
@@ -129,12 +175,14 @@ const updateNodes = (nodes) => {
         .style('font-size', '10px')
 }
 
+/**
+ * 更新连接线视图
+ * @param {Link[]} links - 连接线数据数组
+ */
 const updateLinks = (links) => {
-    // 更新连接线
     const link = svg.selectAll('line.link')
         .data(links, d => d.source.id + '-' + d.target.id)
 
-    // 删除旧连接
     link.exit().remove()
 
     // 添加新连接
@@ -153,10 +201,17 @@ const updateLinks = (links) => {
         .attr('y2', d => d.target.y)
 }
 
+/**
+ * 处理中心适配器点击事件
+ * @emits openScanDialog
+ */
 const handleAdapterClick = () => {
     emit('openScanDialog')
 }
 
+/**
+ * 组件挂载时初始化D3力导向图
+ */
 onMounted(() => {
     const width = graphContainer.value.clientWidth
     const height = graphContainer.value.clientHeight
