@@ -206,7 +206,6 @@ const dragended = (event, d) => {
 // 监听路由数据变化
 watch(() => props.routes, (newRoutes) => {
     if (svg && simulation) {
-        console.log('newRoutes', newRoutes)
         updateTopology(newRoutes)
     }
 }, { deep: true })

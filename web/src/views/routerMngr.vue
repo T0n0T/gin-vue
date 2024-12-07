@@ -145,22 +145,18 @@
  * @description 提供路由的管理功能，包括添加、编辑、删除路由，以及拓扑图和表格两种视图的切换
  */
 
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import { Plus, Grid, View, Search } from '@element-plus/icons-vue'
-import RouterTopology from '@/components/topology/routerMngr.vue'
 import { ElMessage } from 'element-plus'
 import { useConnectionStore } from '@/store/connect'
 import { storeToRefs } from 'pinia'
+import { useRouterStore } from '@/store/router'
+import RouterTopology from '@/components/topology/routerMngr.vue'
 
 /**
  * @type {import('vue').Ref<boolean>} 是否显示拓扑图视图
  */
 const isTopologyView = ref(true)
-
-/**
- * @type {import('vue').Ref<Array>} 路由列表
- */
-const routes = ref([])
 
 /**
  * @type {import('vue').Ref<boolean>} 路由对话框是否可见
@@ -257,16 +253,11 @@ const saveRoute = () => {
     }
 
     if (editingRoute.value) {
-        const index = routes.value.findIndex(r => r.id === editingRoute.value.id)
-        if (index !== -1) {
-            routes.value[index] = { ...RouteForm.value, id: editingRoute.value.id }
-        }
+        routerStore.updateRoute({ ...RouteForm.value, id: editingRoute.value.id })
     } else {
-        routes.value.push({
-            ...RouteForm.value,
-            id: Date.now().toString()
-        })
+        routerStore.addRoute(RouteForm.value)
     }
+    
     routeDialogVisible.value = false
     ElMessage.success(editingRoute.value ? '路由已更新' : '路由已添加')
 }
@@ -286,7 +277,7 @@ const editRoute = (route) => {
  * @param {Object} route 要删除的路由对象
  */
 const deleteRoute = (route) => {
-    routes.value = routes.value.filter(r => r.id !== route.id)
+    routerStore.deleteRoute(route.id)
     ElMessage.success('路由已删除')
 }
 
@@ -393,6 +384,14 @@ const handleSearch = () => {
         row?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
 }
+
+const routerStore = useRouterStore()
+const { routes } =storeToRefs(routerStore)
+
+onMounted(() => {
+    // store中的数据会自动加载，不需要额外操作
+    console.log('路由数据已加载:', routes.value)
+})
 </script>
 
 <style scoped>

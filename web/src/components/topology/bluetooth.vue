@@ -44,6 +44,11 @@ let svg = null
 /** @type {d3.Simulation} */
 let simulation = null
 
+const emit = defineEmits([
+    'openScanDialog',  // 打开扫描对话框事件
+    'selectDevice'     // 选择设备事件
+])
+
 /**
  * 监听设备数据变化，更新拓扑图
  * @param {Device[]} newDevices - 新的设备列表
@@ -95,7 +100,7 @@ const updateTopology = (devices) => {
 /**
  * 处理拖拽开始事件
  * @param {d3.D3DragEvent<any, Device, any>} event - D3拖拽事件
- * @param {Device} d - 节点数据
+ * @param {Device} d - 节��数据
  */
 const dragstarted = (event, d) => {
     if (!event.active) simulation.alphaTarget(0.3).restart()
