@@ -6,12 +6,12 @@ import 'element-plus/dist/index.css'
 import './main.css'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faBluetooth } from '@fortawesome/free-brands-svg-icons'
-import { faWifi, faSignal } from '@fortawesome/free-solid-svg-icons'
+import { faWifi, faSignal, faPlug } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { createPinia } from 'pinia'
 import 'virtual:svg-icons-register'
 
-library.add(faBluetooth, faWifi, faSignal)
+library.add(faBluetooth, faWifi, faSignal, faPlug)
 createApp(App)
     .component('font-awesome-icon', FontAwesomeIcon)
     .use(ElementPlus)

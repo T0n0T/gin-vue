@@ -14,8 +14,13 @@
                              :class="{ 'selected': bluetoothStore.selectedDevice?.address === device.address }" 
                              @click="handleDeviceSelect(device)">
                             <div class="device-info">
-                                <span class="device-name">{{ device.name || 'Unknown name' }}</span>
-                                <span class="device-address">{{ device.address }}</span>
+                                <span class="device-name">
+                                    {{ device.name || 'Unknown name' }}
+                                    <font-awesome-icon icon="plug" />
+                                </span>
+                                <span class="device-address">
+                                    {{ device.address }}
+                                </span>
                                 <div class="signal-strength">
                                     <div class="signal-text" style="width: 100px">
                                         <span>{{ device.rssi }}</span>
