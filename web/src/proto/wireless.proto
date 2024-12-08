@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package api.wireless.v1;
+
+option go_package = "microgw/api/wireless/v1;v1";
+
+import "google/protobuf/empty.proto";
+
+service Wireless {
+	// adapter
+	rpc AdapterCheck(google.protobuf.Empty) returns(AdapterCheckResponse);
+	rpc AdapterScan(AdapterScanRequest) returns(stream AdapterScanResponse);
+	rpc AdapterConfigure(AdapterConfigureRequest) returns(Response);	// listener or binder
+
+	// devicemanager
+	rpc DeviceCheck(google.protobuf.Empty) returns(DeviceCheckResponse);
+	rpc DeviceCreate(DeviceCreateContext) returns(Response);
+	rpc DeviceDestroy(DeviceID) returns(Response);	
+	rpc DeviceConnectCheck(DeviceID) returns(ConnectCheckResponse);
+	rpc DeviceConnectCreate(ConnectCreateContext) returns(Response);
+	rpc DeviceConnectDestroy(ConnectDestroyContext) returns(Response);
+
+	// channelmanager
+	rpc ChannelCreate(ChannelCreateContext) returns(ChannelID);
+	rpc ChannelDestroy(ChannelID) returns(Response);
+	rpc ChannelBind(ChannelBindContext) returns(Response);
+	rpc ChannelUnbind(ChannelBindContext) returns(Response);
+	rpc ChannelEnable(ChannelID) returns(Response);
+	rpc ChannelDisable(ChannelID) returns(Response);
+}
+
+//normal response
+message Response {
+	string msg = 1;
+}
+
+// adapter status
+message AdapterCheckResponse {
+	bool isAlive= 1;
+	bool isScanActivate = 2;
+	string adapterName = 3;
+	reserved 4;
+}
+
+// adapter scan
+message AdapterScanRequest {
+	bool isScanActivate = 1;
+	optional int32 duration = 2;
+}
+
+message AdapterScanResponse {
+	bytes ctx = 2;
+}
+
+// adapter configure
+message AdapterConfigureRequest {
+	bytes ctx = 1;
+}
+
+// device
+message DeviceCreateContext {	
+	bytes deviceData = 1;
+}
+
+message DeviceID {
+	uint32 ID = 1;
+}
+
+message DeviceCheckResponse {
+	map<uint32, bytes> deviceStatusList = 1;
+}
+
+message ConnectStatus {
+	bool status = 1;
+	bytes connectSpec = 2;
+}
+
+message ConnectCheckResponse {
+	map<uint32, ConnectStatus> connectStatusList = 1;
+}
+
+message ConnectCreateContext {
+	uint32 devID = 1;
+	bytes connectData = 2;
+}
+
+message ConnectDestroyContext {
+	uint32 devID = 1;
+	uint32 connID = 2;
+}
+
+message ConnectID {
+	uint32 ID = 1;
+}
+
+enum ChannelType {
+	Channel_TYPE_UP = 0;
+	Channel_TYPE_DOWN = 1;
+}
+
+message ChannelCreateContext {
+	string topic = 1;
+	ChannelType type = 2;
+}
+
+message ChannelBindContext {
+	uint32 chanId = 1;
+	uint32 devID = 2;
+	uint32 connID = 3;
+}
+
+message ChannelID {
+	uint32 ID = 1;
+}
