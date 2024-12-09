@@ -10,10 +10,9 @@ import { root } from '../proto/wireless'
  * @property {Object|null} connConfig - 连接配置信息
  */
 class Connect {
-    constructor(connID, status = false, connConfig = null) {
+    constructor(connID, status = false) {
         this.connID = connID
         this.status = status // available状态
-        this.connConfig = connConfig
     }
 }
 
