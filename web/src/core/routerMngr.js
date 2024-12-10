@@ -1,5 +1,6 @@
 import { channelApi } from '../api/channel'
 import { useRouterStore } from '../store/router'
+import { $root } from '../proto/wireless'
 
 // Entry类定义
 class Entry {
@@ -30,10 +31,10 @@ export class RouterManager {
   }
 
   // 获取或创建Entry
-  getOrCreateEntry(devId, connId) {
+  getOrCreateEntry(devType, devId, connId) {
     const key = this.getEntryKey(devId, connId)
     if (!this.entries.has(key)) {
-      this.entries.set(key, new Entry(devId, connId))
+      this.entries.set(key, new Entry(devType, devId, connId))
     }
     return this.entries.get(key)
   }
@@ -51,8 +52,16 @@ export class RouterManager {
     if (existingRouter) return
 
     // 创建或更新Entry
-    const upEntry = this.getOrCreateEntry(newRouter.upEntry.devId, newRouter.upEntry.connId)
-    const downEntry = this.getOrCreateEntry(newRouter.downEntry.devId, newRouter.downEntry.connId)
+    const upEntry = this.getOrCreateEntry(
+      newRouter.upEntry.devType,
+      newRouter.upEntry.devId, 
+      newRouter.upEntry.connId
+    )
+    const downEntry = this.getOrCreateEntry(
+      newRouter.downEntry.devType,
+      newRouter.downEntry.devId, 
+      newRouter.downEntry.connId
+    )
     upEntry.refCount++
     downEntry.refCount++
 
@@ -68,47 +77,54 @@ export class RouterManager {
     const upKey = this.getEntryKey(router.upEntry.devId, router.upEntry.connId)
     const downKey = this.getEntryKey(router.downEntry.devId, router.downEntry.connId)
     
+    const upEntry = this.entries.get(upKey)
+    const downEntry = this.entries.get(downKey)
+    
     // 生成topic名称
     const topicName = `topic_${upKey}_${downKey}`
     
-    // 创建或获取上行channel
+    // 创建上行channel
     if (!this.upChannels.has(upKey)) {
-      const upChannel = await channelApi.createChannel({
-        entryId: upKey,
-        direction: 'up'
+      // 创建并序列化ChannelCreateContext
+      const createContext = $root.api.wireless.v1.ChannelCreateContext.create({
+        topic: topicName,
+        type: $root.api.wireless.v1.ChannelType.Channel_TYPE_UP
       })
-      this.upChannels.set(upKey, upChannel)
+      const encodedCreateContext = $root.api.wireless.v1.ChannelCreateContext.encode(createContext).finish()
+      
+      const upChannel = await channelApi.createChannel(encodedCreateContext, `/${upEntry.devType}`)
+      this.upChannels.set(upKey, upChannel.ID)
     }
 
-    // 创建或获取下行channel
+    // 创建下行channel
     if (!this.downChannels.has(downKey)) {
-      const downChannel = await channelApi.createChannel({
-        entryId: downKey,
-        direction: 'down'
+      const createContext = $root.api.wireless.v1.ChannelCreateContext.create({
+        topic: topicName, 
+        type: $root.api.wireless.v1.ChannelType.Channel_TYPE_DOWN
       })
-      this.downChannels.set(downKey, downChannel)
+      const encodedCreateContext = $root.api.wireless.v1.ChannelCreateContext.encode(createContext).finish()
+      
+      const downChannel = await channelApi.createChannel(encodedCreateContext, `/${downEntry.devType}`)
+      this.downChannels.set(downKey, downChannel.ID)
     }
 
-    // 处理topic绑定
-    if (!this.topics.has(topicName)) {
-      this.topics.set(topicName, {
-        publishers: [upKey],
-        subscribers: [downKey]
-      })
-    }
-
-    // 绑定channel到topic
-    await channelApi.bindChannel({
-      channelId: this.upChannels.get(upKey),
-      topic: topicName,
-      role: 'publisher'
+    // 绑定上行channel
+    const upBindContext = $root.api.wireless.v1.ChannelBindContext.create({
+      chanId: this.upChannels.get(upKey),
+      devID: parseInt(router.upEntry.devId),
+      connID: parseInt(router.upEntry.connId)
     })
+    const encodedUpBindContext = $root.api.wireless.v1.ChannelBindContext.encode(upBindContext).finish()
+    await channelApi.bindChannel(encodedUpBindContext, `/${upEntry.devType}`)
 
-    await channelApi.bindChannel({
-      channelId: this.downChannels.get(downKey),
-      topic: topicName,
-      role: 'subscriber'
+    // 绑定下行channel  
+    const downBindContext = $root.api.wireless.v1.ChannelBindContext.create({
+      chanId: this.downChannels.get(downKey),
+      devID: parseInt(router.downEntry.devId), 
+      connID: parseInt(router.downEntry.connId)
     })
+    const encodedDownBindContext = $root.api.wireless.v1.ChannelBindContext.encode(downBindContext).finish()
+    await channelApi.bindChannel(encodedDownBindContext, `/${downEntry.devType}`)
   }
 
   // 移除router
@@ -145,32 +161,26 @@ export class RouterManager {
   async cleanupChannel(entryKey, direction) {
     const channelMap = direction === 'up' ? this.upChannels : this.downChannels
     const channelId = channelMap.get(entryKey)
+    const entry = this.entries.get(entryKey)
     
     if (channelId) {
-      // 解绑所有相关topic
-      for (const [topicName, topic] of this.topics.entries()) {
-        if (direction === 'up' && topic.publishers.includes(entryKey)) {
-          await channelApi.unbindChannel({
-            channelId,
-            topic: topicName
-          })
-          topic.publishers = topic.publishers.filter(p => p !== entryKey)
-        } else if (direction === 'down' && topic.subscribers.includes(entryKey)) {
-          await channelApi.unbindChannel({
-            channelId,
-            topic: topicName
-          })
-          topic.subscribers = topic.subscribers.filter(s => s !== entryKey)
-        }
-
-        // 如果topic没有发布者或订阅者，则删除
-        if (topic.publishers.length === 0 || topic.subscribers.length === 0) {
-          this.topics.delete(topicName)
-        }
-      }
+      // 解绑channel
+      const bindContext = $root.api.wireless.v1.ChannelBindContext.create({
+        chanId: channelId,
+        devID: parseInt(entry.devId),
+        connID: parseInt(entry.connId)
+      })
+      const encodedBindContext = $root.api.wireless.v1.ChannelBindContext.encode(bindContext).finish()
+      await channelApi.unbindChannel(encodedBindContext, `/${entry.devType}`)
 
       // 销毁channel
-      await channelApi.destroyChannel(channelId)
+      const channelContext = $root.api.wireless.v1.ChannelID.create({
+        ID: channelId
+      })
+      const encodedChannelContext = $root.api.wireless.v1.ChannelID.encode(channelContext).finish()
+      await channelApi.destroyChannel(encodedChannelContext, `/${entry.devType}`)
+
+      // 从Map中移除
       channelMap.delete(entryKey)
     }
   }
