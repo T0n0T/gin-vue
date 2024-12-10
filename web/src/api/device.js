@@ -11,8 +11,8 @@ export const deviceApi = {
    * @async
    * @returns {Promise<Object>} 返回设备状态信息，包含deviceId等
    */
-  checkDevice: () => {
-    return protoRequest('/DeviceCheck', null)
+  checkDevice: (prefix = '') => {
+    return protoRequest(`${prefix}/DeviceCheck`, null)
   },
 
   /**
@@ -21,8 +21,8 @@ export const deviceApi = {
    * @param {Object} deviceContext - 设备创建所需的配置信息
    * @returns {Promise<Object>} 设备创建结果
    */
-  createDevice: (deviceContext) => {
-    return protoRequest('/DeviceCreate', deviceContext)
+  createDevice: (deviceContext, prefix = '') => {
+    return protoRequest(`${prefix}/DeviceCreate`, deviceContext)
   },
 
   /**
@@ -31,8 +31,8 @@ export const deviceApi = {
    * @param {string} deviceId - 设备ID
    * @returns {Promise<Object>} 设备销毁结果
    */
-  destroyDevice: (deviceId) => {
-    return protoRequest('/DeviceDestroy', deviceId)
+  destroyDevice: (deviceId, prefix = '') => {
+    return protoRequest(`${prefix}/DeviceDestroy`, deviceId)
   },
 
   /**
@@ -41,8 +41,8 @@ export const deviceApi = {
    * @param {string} deviceId - 设备ID
    * @returns {Promise<Object>} 返回连接状态信息，包含connectId等
    */
-  checkDeviceConnect: (deviceId) => {
-    return protoRequest('/DeviceConnectCheck', deviceId)
+  checkDeviceConnect: (deviceId, prefix = '') => {
+    return protoRequest(`${prefix}/DeviceConnectCheck`, deviceId)
   },
 
   /**
@@ -51,8 +51,8 @@ export const deviceApi = {
    * @param {Object} connectContext - 连接创建所需的配置信息
    * @returns {Promise<Object>} 连接创建结果
    */
-  createDeviceConnect: (connectContext) => {
-    return protoRequest('/DeviceConnectCreate', connectContext)
+  createDeviceConnect: (connectContext, prefix = '') => {
+    return protoRequest(`${prefix}/DeviceConnectCreate`, connectContext)
   },
 
   /**
@@ -63,7 +63,7 @@ export const deviceApi = {
    * @param {string} destroyContext.connectId - 连接ID
    * @returns {Promise<Object>} 连接销毁结果
    */
-  destroyDeviceConnect: (destroyContext) => {
-    return protoRequest('/DeviceConnectDestroy', destroyContext)
+  destroyDeviceConnect: (destroyContext, prefix = '') => {
+    return protoRequest(`${prefix}/DeviceConnectDestroy`, destroyContext)
   }
 }

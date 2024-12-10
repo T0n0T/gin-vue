@@ -1,6 +1,6 @@
 import { deviceApi } from '../api/device'
 import { useDeviceStore } from '../store/device'
-import { root } from '../proto/wireless'
+import { $root } from '../proto/wireless'
 
 /**
  * 设备连接类
@@ -68,13 +68,13 @@ export class DeviceManager {
     async deviceCreate(deviceData) {
         try {
             // 创建并序列化DeviceCreateContext
-            const context = root.api.wireless.v1.DeviceCreateContext.create({
+            const context = $root.api.wireless.v1.DeviceCreateContext.create({
                 deviceData: deviceData
             });
-            const encodedContext = root.api.wireless.v1.DeviceCreateContext.encode(context).finish();
+            const encodedContext = $root.api.wireless.v1.DeviceCreateContext.encode(context).finish();
 
             // 调用API创建设备
-            await deviceApi.createDevice(encodedContext)
+            await deviceApi.createDevice(encodedContext, this.deviceType)
 
             // 生成设备ID并创建设备实例
             const devID = this.deviceIdentify(deviceData)
@@ -99,7 +99,12 @@ export class DeviceManager {
     async deviceDestroy(devID) {
         try {
             // 调用API销毁设备
-            await deviceApi.destroyDevice({ ID: devID })
+            const context = $root.api.wireless.v1.DeviceID.create({
+                devID: devID
+            });
+            const encodedContext = $root.api.wireless.v1.DeviceID.encode(context).finish();
+    
+            await deviceApi.destroyDevice(encodedContext, this.deviceType)
 
             // 从pinia中移除设备
             this.store.removeDevice(devID)
@@ -121,10 +126,10 @@ export class DeviceManager {
     async deviceCheck() {
         try {
             // 调用API检查设备
-            const response = await deviceApi.checkDevice()
+            const response = await deviceApi.checkDevice(this.deviceType)
 
             // 解码proto返回的数据
-            const decodedResponse = root.api.wireless.v1.DeviceCheckResponse.decode(response)
+            const decodedResponse = $root.api.wireless.v1.DeviceCheckResponse.decode(response)
             // 处理返回的连接状态列表
             const deviceStatusList = decodedResponse.deviceStatusList || {}
 
@@ -161,14 +166,14 @@ export class DeviceManager {
     async deviceConnectCreate(devID, connectData) {
         try {
             // 创建并序列化ConnectCreateContext  
-            const context = root.api.wireless.v1.ConnectCreateContext.create({
+            const context = $root.api.wireless.v1.ConnectCreateContext.create({
                 devID: devID,
                 connectData: connectData
             });
-            const encodedContext = root.api.wireless.v1.ConnectCreateContext.encode(context).finish();
+            const encodedContext = $root.api.wireless.v1.ConnectCreateContext.encode(context).finish();
 
             // 调用API创建连接
-            await deviceApi.createDeviceConnect(encodedContext)
+            await deviceApi.createDeviceConnect(encodedContext, this.deviceType)
 
             // 生成连接ID并创建连接实例
             const connID = this.connectIdentify(connectData)
@@ -197,13 +202,14 @@ export class DeviceManager {
     async deviceConnectDestroy(devID, connID) {
         try {
             // 创建proto的ConnectDestroyContext
-            const context = {
+            const context = $root.api.wireless.v1.ConnectDestroyContext.create({
                 devID: devID,
                 connID: connID
-            }
+            });
+            const encodedContext = $root.api.wireless.v1.ConnectDestroyContext.encode(context).finish();
 
             // 调用API销毁连接
-            await deviceApi.destroyDeviceConnect(context)
+            await deviceApi.destroyDeviceConnect(encodedContext, this.deviceType)
 
             // 从设备的connectMap中移除连接
             const device = this.store.getDevice(devID)
@@ -228,11 +234,17 @@ export class DeviceManager {
      */
     async deviceConnectCheck(devID) {
         try {
+            // 创建并序列化ConnectCheckContext
+            const context = $root.api.wireless.v1.DeviceID.create({
+                devID: devID
+            });
+            const encodedContext = $root.api.wireless.v1.DeviceID.encode(context).finish();
+
             // 调用API检查连接
-            const response = await deviceApi.checkDeviceConnect({ ID: devID })
+            const response = await deviceApi.checkDeviceConnect(encodedContext, this.deviceType)
 
             // 解码proto返回的数据
-            const decodedResponse = root.api.wireless.v1.ConnectCheckResponse.decode(response)
+            const decodedResponse = $root.api.wireless.v1.ConnectCheckResponse.decode(response)
             // 处理返回的连接状态列表
             const connectStatusList = decodedResponse.connectStatusList || {}
             const device = this.store.getDevice(devID)

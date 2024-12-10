@@ -1,4 +1,6 @@
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
+import { DeviceManager } from '../core/devMngr'
 
 /**
  * 设备管理器Store
@@ -10,35 +12,51 @@ import { defineStore } from 'pinia'
  * 使用Pinia创建的设备管理Store
  * @returns {Object} 设备管理Store实例
  */
-export const useDeviceStore = defineStore('deviceStore', {
-    state: () => ({
-        /** @type {Map<string, Device>} 存储设备信息的Map集合 */
-        devices: new Map()
-    }),
-    actions: {
-        /**
-         * 添加设备到Store中
-         * @param {Device} device - 要添加的设备对象
-         */
-        addDevice(device) {
-            this.devices.set(device.devID, device)
-        },
+export const useDeviceStore = defineStore('device', () => {
+    // 存储设备列表
+    const devices = ref(new Map())
+    // 存储DeviceManager实例
+    const deviceManager = ref(null)
 
-        /**
-         * 从Store中移除指定设备
-         * @param {string} devID - 要移除的设备ID
-         */
-        removeDevice(devID) {
-            this.devices.delete(devID)
-        },
-
-        /**
-         * 获取指定设备信息
-         * @param {string} devID - 要获取的设备ID
-         * @returns {Device|undefined} 设备对象，如果不存在则返回undefined
-         */
-        getDevice(devID) {
-            return this.devices.get(devID)
+    // 初始化DeviceManager
+    const initDeviceManager = (deviceType, deviceIdentify, connectIdentify) => {
+        if (!deviceManager.value) {
+            deviceManager.value = new DeviceManager(deviceType, deviceIdentify, connectIdentify)
         }
+        return deviceManager.value
+    }
+
+    // 获取DeviceManager实例
+    const getDeviceManager = () => {
+        return deviceManager.value
+    }
+
+    // 添加设备
+    const addDevice = (device) => {
+        devices.value.set(device.devID, device)
+    }
+
+    // 获取设备
+    const getDevice = (devID) => {
+        return devices.value.get(devID)
+    }
+
+    // 移除设备
+    const removeDevice = (devID) => {
+        devices.value.delete(devID)
+    }
+
+    return {
+        devices,
+        deviceManager,
+        getDeviceManager,
+        initDeviceManager,
+        addDevice,
+        getDevice,
+        removeDevice
+    }
+}, {
+    persist: {
+        paths: ['devices'] // 只持久化devices数据
     }
 })

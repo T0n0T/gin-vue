@@ -102,7 +102,7 @@ let newRouter = [
   [1, 2],
   [1, 3],
   [2, 4],
-  [3, 4]
+  [3, 4],
 ];
 
 const result = transformRouterToChannel(prevRouter, newRouter);
