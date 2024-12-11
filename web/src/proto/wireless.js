@@ -1,22 +1,20 @@
 /*eslint-disable block-scoped-var, id-length, no-control-regex, no-magic-numbers, no-prototype-builtins, no-redeclare, no-shadow, no-var, sort-vars*/
-"use strict";
-
-var $protobuf = require("protobufjs/minimal");
+import * as $protobuf from "protobufjs/minimal";
 
 // Common aliases
-var $Reader = $protobuf.Reader, $Writer = $protobuf.Writer, $util = $protobuf.util;
+const $Reader = $protobuf.Reader, $Writer = $protobuf.Writer, $util = $protobuf.util;
 
 // Exported root namespace
-var $root = $protobuf.roots["default"] || ($protobuf.roots["default"] = {});
+const $root = $protobuf.roots["default"] || ($protobuf.roots["default"] = {});
 
-$root.api = (function() {
+export const api = $root.api = (() => {
 
     /**
      * Namespace api.
      * @exports api
      * @namespace
      */
-    var api = {};
+    const api = {};
 
     api.wireless = (function() {
 
@@ -25,7 +23,7 @@ $root.api = (function() {
          * @memberof api
          * @namespace
          */
-        var wireless = {};
+        const wireless = {};
 
         wireless.v1 = (function() {
 
@@ -34,7 +32,7 @@ $root.api = (function() {
              * @memberof api.wireless
              * @namespace
              */
-            var v1 = {};
+            const v1 = {};
 
             v1.Wireless = (function() {
 
@@ -585,7 +583,7 @@ $root.api = (function() {
                  */
                 function Response(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -654,9 +652,9 @@ $root.api = (function() {
                 Response.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.Response();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.Response();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.msg = reader.string();
@@ -714,7 +712,7 @@ $root.api = (function() {
                 Response.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.Response)
                         return object;
-                    var message = new $root.api.wireless.v1.Response();
+                    let message = new $root.api.wireless.v1.Response();
                     if (object.msg != null)
                         message.msg = String(object.msg);
                     return message;
@@ -732,7 +730,7 @@ $root.api = (function() {
                 Response.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults)
                         object.msg = "";
                     if (message.msg != null && message.hasOwnProperty("msg"))
@@ -790,7 +788,7 @@ $root.api = (function() {
                  */
                 function AdapterCheckResponse(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -879,9 +877,9 @@ $root.api = (function() {
                 AdapterCheckResponse.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.AdapterCheckResponse();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.AdapterCheckResponse();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.isAlive = reader.bool();
@@ -953,7 +951,7 @@ $root.api = (function() {
                 AdapterCheckResponse.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.AdapterCheckResponse)
                         return object;
-                    var message = new $root.api.wireless.v1.AdapterCheckResponse();
+                    let message = new $root.api.wireless.v1.AdapterCheckResponse();
                     if (object.isAlive != null)
                         message.isAlive = Boolean(object.isAlive);
                     if (object.isScanActivate != null)
@@ -975,7 +973,7 @@ $root.api = (function() {
                 AdapterCheckResponse.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults) {
                         object.isAlive = false;
                         object.isScanActivate = false;
@@ -1039,7 +1037,7 @@ $root.api = (function() {
                  */
                 function AdapterScanRequest(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -1061,7 +1059,7 @@ $root.api = (function() {
                 AdapterScanRequest.prototype.duration = null;
 
                 // OneOf field names bound to virtual getters and setters
-                var $oneOfFields;
+                let $oneOfFields;
 
                 // Virtual OneOf for proto3 optional field
                 Object.defineProperty(AdapterScanRequest.prototype, "_duration", {
@@ -1127,9 +1125,9 @@ $root.api = (function() {
                 AdapterScanRequest.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.AdapterScanRequest();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.AdapterScanRequest();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.isScanActivate = reader.bool();
@@ -1174,7 +1172,7 @@ $root.api = (function() {
                 AdapterScanRequest.verify = function verify(message) {
                     if (typeof message !== "object" || message === null)
                         return "object expected";
-                    var properties = {};
+                    let properties = {};
                     if (message.isScanActivate != null && message.hasOwnProperty("isScanActivate"))
                         if (typeof message.isScanActivate !== "boolean")
                             return "isScanActivate: boolean expected";
@@ -1197,7 +1195,7 @@ $root.api = (function() {
                 AdapterScanRequest.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.AdapterScanRequest)
                         return object;
-                    var message = new $root.api.wireless.v1.AdapterScanRequest();
+                    let message = new $root.api.wireless.v1.AdapterScanRequest();
                     if (object.isScanActivate != null)
                         message.isScanActivate = Boolean(object.isScanActivate);
                     if (object.duration != null)
@@ -1217,7 +1215,7 @@ $root.api = (function() {
                 AdapterScanRequest.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults)
                         object.isScanActivate = false;
                     if (message.isScanActivate != null && message.hasOwnProperty("isScanActivate"))
@@ -1278,7 +1276,7 @@ $root.api = (function() {
                  */
                 function AdapterScanResponse(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -1347,9 +1345,9 @@ $root.api = (function() {
                 AdapterScanResponse.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.AdapterScanResponse();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.AdapterScanResponse();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 2: {
                                 message.ctx = reader.bytes();
@@ -1407,7 +1405,7 @@ $root.api = (function() {
                 AdapterScanResponse.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.AdapterScanResponse)
                         return object;
-                    var message = new $root.api.wireless.v1.AdapterScanResponse();
+                    let message = new $root.api.wireless.v1.AdapterScanResponse();
                     if (object.ctx != null)
                         if (typeof object.ctx === "string")
                             $util.base64.decode(object.ctx, message.ctx = $util.newBuffer($util.base64.length(object.ctx)), 0);
@@ -1428,7 +1426,7 @@ $root.api = (function() {
                 AdapterScanResponse.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults)
                         if (options.bytes === String)
                             object.ctx = "";
@@ -1490,7 +1488,7 @@ $root.api = (function() {
                  */
                 function AdapterConfigureRequest(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -1559,9 +1557,9 @@ $root.api = (function() {
                 AdapterConfigureRequest.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.AdapterConfigureRequest();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.AdapterConfigureRequest();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.ctx = reader.bytes();
@@ -1619,7 +1617,7 @@ $root.api = (function() {
                 AdapterConfigureRequest.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.AdapterConfigureRequest)
                         return object;
-                    var message = new $root.api.wireless.v1.AdapterConfigureRequest();
+                    let message = new $root.api.wireless.v1.AdapterConfigureRequest();
                     if (object.ctx != null)
                         if (typeof object.ctx === "string")
                             $util.base64.decode(object.ctx, message.ctx = $util.newBuffer($util.base64.length(object.ctx)), 0);
@@ -1640,7 +1638,7 @@ $root.api = (function() {
                 AdapterConfigureRequest.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults)
                         if (options.bytes === String)
                             object.ctx = "";
@@ -1702,7 +1700,7 @@ $root.api = (function() {
                  */
                 function DeviceCreateContext(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -1771,9 +1769,9 @@ $root.api = (function() {
                 DeviceCreateContext.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.DeviceCreateContext();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.DeviceCreateContext();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.deviceData = reader.bytes();
@@ -1831,7 +1829,7 @@ $root.api = (function() {
                 DeviceCreateContext.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.DeviceCreateContext)
                         return object;
-                    var message = new $root.api.wireless.v1.DeviceCreateContext();
+                    let message = new $root.api.wireless.v1.DeviceCreateContext();
                     if (object.deviceData != null)
                         if (typeof object.deviceData === "string")
                             $util.base64.decode(object.deviceData, message.deviceData = $util.newBuffer($util.base64.length(object.deviceData)), 0);
@@ -1852,7 +1850,7 @@ $root.api = (function() {
                 DeviceCreateContext.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults)
                         if (options.bytes === String)
                             object.deviceData = "";
@@ -1914,7 +1912,7 @@ $root.api = (function() {
                  */
                 function DeviceID(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -1983,9 +1981,9 @@ $root.api = (function() {
                 DeviceID.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.DeviceID();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.DeviceID();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.ID = reader.uint32();
@@ -2043,7 +2041,7 @@ $root.api = (function() {
                 DeviceID.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.DeviceID)
                         return object;
-                    var message = new $root.api.wireless.v1.DeviceID();
+                    let message = new $root.api.wireless.v1.DeviceID();
                     if (object.ID != null)
                         message.ID = object.ID >>> 0;
                     return message;
@@ -2061,7 +2059,7 @@ $root.api = (function() {
                 DeviceID.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults)
                         object.ID = 0;
                     if (message.ID != null && message.hasOwnProperty("ID"))
@@ -2118,7 +2116,7 @@ $root.api = (function() {
                 function DeviceCheckResponse(properties) {
                     this.deviceStatusList = {};
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -2156,7 +2154,7 @@ $root.api = (function() {
                     if (!writer)
                         writer = $Writer.create();
                     if (message.deviceStatusList != null && Object.hasOwnProperty.call(message, "deviceStatusList"))
-                        for (var keys = Object.keys(message.deviceStatusList), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(message.deviceStatusList), i = 0; i < keys.length; ++i)
                             writer.uint32(/* id 1, wireType 2 =*/10).fork().uint32(/* id 1, wireType 0 =*/8).uint32(keys[i]).uint32(/* id 2, wireType 2 =*/18).bytes(message.deviceStatusList[keys[i]]).ldelim();
                     return writer;
                 };
@@ -2188,18 +2186,18 @@ $root.api = (function() {
                 DeviceCheckResponse.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.DeviceCheckResponse(), key, value;
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.DeviceCheckResponse(), key, value;
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 if (message.deviceStatusList === $util.emptyObject)
                                     message.deviceStatusList = {};
-                                var end2 = reader.uint32() + reader.pos;
+                                let end2 = reader.uint32() + reader.pos;
                                 key = 0;
                                 value = [];
                                 while (reader.pos < end2) {
-                                    var tag2 = reader.uint32();
+                                    let tag2 = reader.uint32();
                                     switch (tag2 >>> 3) {
                                     case 1:
                                         key = reader.uint32();
@@ -2253,8 +2251,8 @@ $root.api = (function() {
                     if (message.deviceStatusList != null && message.hasOwnProperty("deviceStatusList")) {
                         if (!$util.isObject(message.deviceStatusList))
                             return "deviceStatusList: object expected";
-                        var key = Object.keys(message.deviceStatusList);
-                        for (var i = 0; i < key.length; ++i) {
+                        let key = Object.keys(message.deviceStatusList);
+                        for (let i = 0; i < key.length; ++i) {
                             if (!$util.key32Re.test(key[i]))
                                 return "deviceStatusList: integer key{k:uint32} expected";
                             if (!(message.deviceStatusList[key[i]] && typeof message.deviceStatusList[key[i]].length === "number" || $util.isString(message.deviceStatusList[key[i]])))
@@ -2275,12 +2273,12 @@ $root.api = (function() {
                 DeviceCheckResponse.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.DeviceCheckResponse)
                         return object;
-                    var message = new $root.api.wireless.v1.DeviceCheckResponse();
+                    let message = new $root.api.wireless.v1.DeviceCheckResponse();
                     if (object.deviceStatusList) {
                         if (typeof object.deviceStatusList !== "object")
                             throw TypeError(".api.wireless.v1.DeviceCheckResponse.deviceStatusList: object expected");
                         message.deviceStatusList = {};
-                        for (var keys = Object.keys(object.deviceStatusList), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(object.deviceStatusList), i = 0; i < keys.length; ++i)
                             if (typeof object.deviceStatusList[keys[i]] === "string")
                                 $util.base64.decode(object.deviceStatusList[keys[i]], message.deviceStatusList[keys[i]] = $util.newBuffer($util.base64.length(object.deviceStatusList[keys[i]])), 0);
                             else if (object.deviceStatusList[keys[i]].length >= 0)
@@ -2301,13 +2299,13 @@ $root.api = (function() {
                 DeviceCheckResponse.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.objects || options.defaults)
                         object.deviceStatusList = {};
-                    var keys2;
+                    let keys2;
                     if (message.deviceStatusList && (keys2 = Object.keys(message.deviceStatusList)).length) {
                         object.deviceStatusList = {};
-                        for (var j = 0; j < keys2.length; ++j)
+                        for (let j = 0; j < keys2.length; ++j)
                             object.deviceStatusList[keys2[j]] = options.bytes === String ? $util.base64.encode(message.deviceStatusList[keys2[j]], 0, message.deviceStatusList[keys2[j]].length) : options.bytes === Array ? Array.prototype.slice.call(message.deviceStatusList[keys2[j]]) : message.deviceStatusList[keys2[j]];
                     }
                     return object;
@@ -2362,7 +2360,7 @@ $root.api = (function() {
                  */
                 function ConnectStatus(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -2441,9 +2439,9 @@ $root.api = (function() {
                 ConnectStatus.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectStatus();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectStatus();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.status = reader.bool();
@@ -2508,7 +2506,7 @@ $root.api = (function() {
                 ConnectStatus.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.ConnectStatus)
                         return object;
-                    var message = new $root.api.wireless.v1.ConnectStatus();
+                    let message = new $root.api.wireless.v1.ConnectStatus();
                     if (object.status != null)
                         message.status = Boolean(object.status);
                     if (object.connectSpec != null)
@@ -2531,7 +2529,7 @@ $root.api = (function() {
                 ConnectStatus.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults) {
                         object.status = false;
                         if (options.bytes === String)
@@ -2598,7 +2596,7 @@ $root.api = (function() {
                 function ConnectCheckResponse(properties) {
                     this.connectStatusList = {};
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -2636,7 +2634,7 @@ $root.api = (function() {
                     if (!writer)
                         writer = $Writer.create();
                     if (message.connectStatusList != null && Object.hasOwnProperty.call(message, "connectStatusList"))
-                        for (var keys = Object.keys(message.connectStatusList), i = 0; i < keys.length; ++i) {
+                        for (let keys = Object.keys(message.connectStatusList), i = 0; i < keys.length; ++i) {
                             writer.uint32(/* id 1, wireType 2 =*/10).fork().uint32(/* id 1, wireType 0 =*/8).uint32(keys[i]);
                             $root.api.wireless.v1.ConnectStatus.encode(message.connectStatusList[keys[i]], writer.uint32(/* id 2, wireType 2 =*/18).fork()).ldelim().ldelim();
                         }
@@ -2670,18 +2668,18 @@ $root.api = (function() {
                 ConnectCheckResponse.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectCheckResponse(), key, value;
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectCheckResponse(), key, value;
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 if (message.connectStatusList === $util.emptyObject)
                                     message.connectStatusList = {};
-                                var end2 = reader.uint32() + reader.pos;
+                                let end2 = reader.uint32() + reader.pos;
                                 key = 0;
                                 value = null;
                                 while (reader.pos < end2) {
-                                    var tag2 = reader.uint32();
+                                    let tag2 = reader.uint32();
                                     switch (tag2 >>> 3) {
                                     case 1:
                                         key = reader.uint32();
@@ -2735,12 +2733,12 @@ $root.api = (function() {
                     if (message.connectStatusList != null && message.hasOwnProperty("connectStatusList")) {
                         if (!$util.isObject(message.connectStatusList))
                             return "connectStatusList: object expected";
-                        var key = Object.keys(message.connectStatusList);
-                        for (var i = 0; i < key.length; ++i) {
+                        let key = Object.keys(message.connectStatusList);
+                        for (let i = 0; i < key.length; ++i) {
                             if (!$util.key32Re.test(key[i]))
                                 return "connectStatusList: integer key{k:uint32} expected";
                             {
-                                var error = $root.api.wireless.v1.ConnectStatus.verify(message.connectStatusList[key[i]]);
+                                let error = $root.api.wireless.v1.ConnectStatus.verify(message.connectStatusList[key[i]]);
                                 if (error)
                                     return "connectStatusList." + error;
                             }
@@ -2760,12 +2758,12 @@ $root.api = (function() {
                 ConnectCheckResponse.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.ConnectCheckResponse)
                         return object;
-                    var message = new $root.api.wireless.v1.ConnectCheckResponse();
+                    let message = new $root.api.wireless.v1.ConnectCheckResponse();
                     if (object.connectStatusList) {
                         if (typeof object.connectStatusList !== "object")
                             throw TypeError(".api.wireless.v1.ConnectCheckResponse.connectStatusList: object expected");
                         message.connectStatusList = {};
-                        for (var keys = Object.keys(object.connectStatusList), i = 0; i < keys.length; ++i) {
+                        for (let keys = Object.keys(object.connectStatusList), i = 0; i < keys.length; ++i) {
                             if (typeof object.connectStatusList[keys[i]] !== "object")
                                 throw TypeError(".api.wireless.v1.ConnectCheckResponse.connectStatusList: object expected");
                             message.connectStatusList[keys[i]] = $root.api.wireless.v1.ConnectStatus.fromObject(object.connectStatusList[keys[i]]);
@@ -2786,13 +2784,13 @@ $root.api = (function() {
                 ConnectCheckResponse.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.objects || options.defaults)
                         object.connectStatusList = {};
-                    var keys2;
+                    let keys2;
                     if (message.connectStatusList && (keys2 = Object.keys(message.connectStatusList)).length) {
                         object.connectStatusList = {};
-                        for (var j = 0; j < keys2.length; ++j)
+                        for (let j = 0; j < keys2.length; ++j)
                             object.connectStatusList[keys2[j]] = $root.api.wireless.v1.ConnectStatus.toObject(message.connectStatusList[keys2[j]], options);
                     }
                     return object;
@@ -2847,7 +2845,7 @@ $root.api = (function() {
                  */
                 function ConnectCreateContext(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -2926,9 +2924,9 @@ $root.api = (function() {
                 ConnectCreateContext.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectCreateContext();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectCreateContext();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.devID = reader.uint32();
@@ -2993,7 +2991,7 @@ $root.api = (function() {
                 ConnectCreateContext.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.ConnectCreateContext)
                         return object;
-                    var message = new $root.api.wireless.v1.ConnectCreateContext();
+                    let message = new $root.api.wireless.v1.ConnectCreateContext();
                     if (object.devID != null)
                         message.devID = object.devID >>> 0;
                     if (object.connectData != null)
@@ -3016,7 +3014,7 @@ $root.api = (function() {
                 ConnectCreateContext.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults) {
                         object.devID = 0;
                         if (options.bytes === String)
@@ -3083,7 +3081,7 @@ $root.api = (function() {
                  */
                 function ConnectDestroyContext(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -3162,9 +3160,9 @@ $root.api = (function() {
                 ConnectDestroyContext.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectDestroyContext();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectDestroyContext();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.devID = reader.uint32();
@@ -3229,7 +3227,7 @@ $root.api = (function() {
                 ConnectDestroyContext.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.ConnectDestroyContext)
                         return object;
-                    var message = new $root.api.wireless.v1.ConnectDestroyContext();
+                    let message = new $root.api.wireless.v1.ConnectDestroyContext();
                     if (object.devID != null)
                         message.devID = object.devID >>> 0;
                     if (object.connID != null)
@@ -3249,7 +3247,7 @@ $root.api = (function() {
                 ConnectDestroyContext.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults) {
                         object.devID = 0;
                         object.connID = 0;
@@ -3309,7 +3307,7 @@ $root.api = (function() {
                  */
                 function ConnectID(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -3378,9 +3376,9 @@ $root.api = (function() {
                 ConnectID.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectID();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ConnectID();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.ID = reader.uint32();
@@ -3438,7 +3436,7 @@ $root.api = (function() {
                 ConnectID.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.ConnectID)
                         return object;
-                    var message = new $root.api.wireless.v1.ConnectID();
+                    let message = new $root.api.wireless.v1.ConnectID();
                     if (object.ID != null)
                         message.ID = object.ID >>> 0;
                     return message;
@@ -3456,7 +3454,7 @@ $root.api = (function() {
                 ConnectID.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults)
                         object.ID = 0;
                     if (message.ID != null && message.hasOwnProperty("ID"))
@@ -3501,7 +3499,7 @@ $root.api = (function() {
              * @property {number} Channel_TYPE_DOWN=1 Channel_TYPE_DOWN value
              */
             v1.ChannelType = (function() {
-                var valuesById = {}, values = Object.create(valuesById);
+                const valuesById = {}, values = Object.create(valuesById);
                 values[valuesById[0] = "Channel_TYPE_UP"] = 0;
                 values[valuesById[1] = "Channel_TYPE_DOWN"] = 1;
                 return values;
@@ -3527,7 +3525,7 @@ $root.api = (function() {
                  */
                 function ChannelCreateContext(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -3606,9 +3604,9 @@ $root.api = (function() {
                 ChannelCreateContext.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ChannelCreateContext();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ChannelCreateContext();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.topic = reader.string();
@@ -3678,7 +3676,7 @@ $root.api = (function() {
                 ChannelCreateContext.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.ChannelCreateContext)
                         return object;
-                    var message = new $root.api.wireless.v1.ChannelCreateContext();
+                    let message = new $root.api.wireless.v1.ChannelCreateContext();
                     if (object.topic != null)
                         message.topic = String(object.topic);
                     switch (object.type) {
@@ -3712,7 +3710,7 @@ $root.api = (function() {
                 ChannelCreateContext.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults) {
                         object.topic = "";
                         object.type = options.enums === String ? "Channel_TYPE_UP" : 0;
@@ -3774,7 +3772,7 @@ $root.api = (function() {
                  */
                 function ChannelBindContext(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -3863,9 +3861,9 @@ $root.api = (function() {
                 ChannelBindContext.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ChannelBindContext();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ChannelBindContext();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.chanId = reader.uint32();
@@ -3937,7 +3935,7 @@ $root.api = (function() {
                 ChannelBindContext.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.ChannelBindContext)
                         return object;
-                    var message = new $root.api.wireless.v1.ChannelBindContext();
+                    let message = new $root.api.wireless.v1.ChannelBindContext();
                     if (object.chanId != null)
                         message.chanId = object.chanId >>> 0;
                     if (object.devID != null)
@@ -3959,7 +3957,7 @@ $root.api = (function() {
                 ChannelBindContext.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults) {
                         object.chanId = 0;
                         object.devID = 0;
@@ -4022,7 +4020,7 @@ $root.api = (function() {
                  */
                 function ChannelID(properties) {
                     if (properties)
-                        for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                        for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                             if (properties[keys[i]] != null)
                                 this[keys[i]] = properties[keys[i]];
                 }
@@ -4091,9 +4089,9 @@ $root.api = (function() {
                 ChannelID.decode = function decode(reader, length) {
                     if (!(reader instanceof $Reader))
                         reader = $Reader.create(reader);
-                    var end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ChannelID();
+                    let end = length === undefined ? reader.len : reader.pos + length, message = new $root.api.wireless.v1.ChannelID();
                     while (reader.pos < end) {
-                        var tag = reader.uint32();
+                        let tag = reader.uint32();
                         switch (tag >>> 3) {
                         case 1: {
                                 message.ID = reader.uint32();
@@ -4151,7 +4149,7 @@ $root.api = (function() {
                 ChannelID.fromObject = function fromObject(object) {
                     if (object instanceof $root.api.wireless.v1.ChannelID)
                         return object;
-                    var message = new $root.api.wireless.v1.ChannelID();
+                    let message = new $root.api.wireless.v1.ChannelID();
                     if (object.ID != null)
                         message.ID = object.ID >>> 0;
                     return message;
@@ -4169,7 +4167,7 @@ $root.api = (function() {
                 ChannelID.toObject = function toObject(message, options) {
                     if (!options)
                         options = {};
-                    var object = {};
+                    let object = {};
                     if (options.defaults)
                         object.ID = 0;
                     if (message.ID != null && message.hasOwnProperty("ID"))
@@ -4215,14 +4213,14 @@ $root.api = (function() {
     return api;
 })();
 
-$root.google = (function() {
+export const google = $root.google = (() => {
 
     /**
      * Namespace google.
      * @exports google
      * @namespace
      */
-    var google = {};
+    const google = {};
 
     google.protobuf = (function() {
 
@@ -4231,7 +4229,7 @@ $root.google = (function() {
          * @memberof google
          * @namespace
          */
-        var protobuf = {};
+        const protobuf = {};
 
         protobuf.Empty = (function() {
 
@@ -4251,7 +4249,7 @@ $root.google = (function() {
              */
             function Empty(properties) {
                 if (properties)
-                    for (var keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null)
                             this[keys[i]] = properties[keys[i]];
             }
@@ -4310,9 +4308,9 @@ $root.google = (function() {
             Empty.decode = function decode(reader, length) {
                 if (!(reader instanceof $Reader))
                     reader = $Reader.create(reader);
-                var end = length === undefined ? reader.len : reader.pos + length, message = new $root.google.protobuf.Empty();
+                let end = length === undefined ? reader.len : reader.pos + length, message = new $root.google.protobuf.Empty();
                 while (reader.pos < end) {
-                    var tag = reader.uint32();
+                    let tag = reader.uint32();
                     switch (tag >>> 3) {
                     default:
                         reader.skipType(tag & 7);
@@ -4414,4 +4412,4 @@ $root.google = (function() {
     return google;
 })();
 
-module.exports = $root;
+export { $root as default };

@@ -8,8 +8,7 @@ const __dirname = path.dirname(__filename);
 const PROTO_DIR = path.join(__dirname, '../src/proto');
 const OUTPUT_DIR = path.join(__dirname, '../src/proto');
 
-const command = `pbjs -t static-module -w commonjs -o ${OUTPUT_DIR}/wireless.js ${PROTO_DIR}/wireless.proto && \
-                pbts -o ${OUTPUT_DIR}/wireless.d.ts ${OUTPUT_DIR}/wireless.js`;
+const command = `pbjs -t static-module -w es6 -o ${OUTPUT_DIR}/wireless.js ${PROTO_DIR}/wireless.proto`;
 
 exec(command, (error, stdout, stderr) => {
   if (error) {

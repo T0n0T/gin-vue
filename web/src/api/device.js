@@ -12,7 +12,7 @@ export const deviceApi = {
    * @returns {Promise<Object>} 返回设备状态信息，包含deviceId等
    */
   checkDevice: (prefix = '') => {
-    return protoRequest(`${prefix}/DeviceCheck`, null)
+    return protoRequest(prefix, `DeviceCheck`, null)
   },
 
   /**
@@ -22,7 +22,7 @@ export const deviceApi = {
    * @returns {Promise<Object>} 设备创建结果
    */
   createDevice: (deviceContext, prefix = '') => {
-    return protoRequest(`${prefix}/DeviceCreate`, deviceContext)
+    return protoRequest(prefix, `DeviceCreate`, deviceContext)
   },
 
   /**
@@ -32,7 +32,7 @@ export const deviceApi = {
    * @returns {Promise<Object>} 设备销毁结果
    */
   destroyDevice: (deviceId, prefix = '') => {
-    return protoRequest(`${prefix}/DeviceDestroy`, deviceId)
+    return protoRequest(prefix, `DeviceDestroy`, deviceId)
   },
 
   /**
@@ -42,7 +42,7 @@ export const deviceApi = {
    * @returns {Promise<Object>} 返回连接状态信息，包含connectId等
    */
   checkDeviceConnect: (deviceId, prefix = '') => {
-    return protoRequest(`${prefix}/DeviceConnectCheck`, deviceId)
+    return protoRequest(prefix, `DeviceConnectCheck`, deviceId)
   },
 
   /**
@@ -52,7 +52,7 @@ export const deviceApi = {
    * @returns {Promise<Object>} 连接创建结果
    */
   createDeviceConnect: (connectContext, prefix = '') => {
-    return protoRequest(`${prefix}/DeviceConnectCreate`, connectContext)
+    return protoRequest(prefix, `DeviceConnectCreate`, connectContext)
   },
 
   /**
@@ -64,6 +64,6 @@ export const deviceApi = {
    * @returns {Promise<Object>} 连接销毁结果
    */
   destroyDeviceConnect: (destroyContext, prefix = '') => {
-    return protoRequest(`${prefix}/DeviceConnectDestroy`, destroyContext)
+    return protoRequest(prefix, `DeviceConnectDestroy`, destroyContext)
   }
 }

@@ -3,16 +3,14 @@
         <!-- 合并后的拓扑图容器 -->
         <div class="topology-map">
             <TopologyGraph :devices="devices" @openScanDialog="openScanDialog" @selectDevice="handleDeviceSelect" />
-            
+
             <!-- 可滑动的设备列表面板 -->
             <div class="sliding-panel" :class="{ 'panel-open': hasConnectedDevices }">
                 <div class="device-list">
                     <div class="devices">
-                        <div v-for="device in bluetoothStore.connectedDevices" 
-                             :key="device.address" 
-                             class="device-item"
-                             :class="{ 'selected': bluetoothStore.selectedDevice?.address === device.address }" 
-                             @click="handleDeviceSelect(device)">
+                        <div v-for="device in bluetoothStore.connectedDevices" :key="device.address" class="device-item"
+                            :class="{ 'selected': bluetoothStore.selectedDevice?.address === device.address }"
+                            @click="handleDeviceSelect(device)">
                             <div class="device-info">
                                 <span class="device-name">
                                     {{ device.name || 'Unknown name' }}
@@ -77,11 +75,8 @@
         </el-dialog>
 
         <!-- 添加配置弹窗组件 -->
-        <ConfigureDeviceDialog
-            v-model:visible="configDialogVisible"
-            :device="selectedConfigDevice"
-            @save="handleConfigSave"
-        />
+        <ConfigureDeviceDialog v-model:visible="configDialogVisible" :device="selectedConfigDevice"
+            @save="handleConfigSave" />
         <el-button class="add-button" circle type="primary" :icon="Plus" @click="openScanDialog" />
         <el-button class="del-button" circle type="primary" :icon="DeleteFilled" @click="clearDevices()" />
     </div>
@@ -98,7 +93,19 @@ import { Setting, Plus, DeleteFilled } from '@element-plus/icons-vue'
 import TopologyGraph from '@/components/topology/bluetooth.vue'
 import { useBluetoothStore } from '@/store/bluetooth'
 import { ElMessage } from 'element-plus'
+import { DeviceManager } from '@/core/devMngr'
+import { adapterApi } from '@/api/adapter'
 import ConfigureDeviceDialog from '@/components/bluetooth/ConfigureDeviceDialog.vue'
+
+/**
+ * @type {import('vue').Ref<Array>} 设备列表
+ */
+const devices = ref([])
+
+/**
+ * @type {import('vue').Ref<Array>} 发现的设备列表
+ */
+const discoveredDevices = ref([])
 
 /**
  * @type {import('vue').Ref<boolean>} 是否按信号强度排序
@@ -116,16 +123,6 @@ const bluetoothStore = useBluetoothStore()
  * @type {import('vue').Ref<boolean>} 扫描对话框是否可见
  */
 const scanDialogVisible = ref(false)
-
-/**
- * @type {import('vue').Ref<Array>} 发现的设备列表
- */
-const discoveredDevices = ref([])
-
-/**
- * @type {import('vue').Ref<Array>} 设备列表
- */
-const devices = ref([])
 
 /**
  * @type {import('vue').Ref<boolean>} 配置对话框是否可见
@@ -158,32 +155,116 @@ const filteredDevices = computed(() => {
     return filtered
 })
 
+// 初始化设备管理器
+const deviceManager = new DeviceManager(
+    'ble',
+    (deviceData) => deviceData.address, // 使用MAC地址作为设备标识
+    (connectData) => connectData.id // 使用连接ID作为连接标识
+)
+
 // 在组件挂载时更新拓扑图
 onMounted(() => {
-    // 从 store 恢复设备数据
-    if (bluetoothStore.connectedDevices.length > 0) {
-        devices.value = [...bluetoothStore.connectedDevices]
-    }
+    // 从 store 恢复设备数据    
+    devices.value = [...bluetoothStore.connectedDevices]
 })
+
+/**
+ * @description 开始扫描蓝牙设备
+ * @returns {void}
+ */
+async function startScan() {
+    try {
+        const scanRequest = {
+            timeout: 30000, // 30秒超时
+            filter: {} // 可以添加过滤条件
+        }
+
+        await adapterApi.scanAdapter(
+            scanRequest,
+            (device) => {
+                // 处理扫描到的设备
+                if (!devices.value.some(d => d.address === device.address)) {
+                    devices.value.push(device)
+                }
+            },
+            (error) => {
+                console.error('Scan error:', error)
+                ElMessage.error('Failed to scan devices')
+            },
+            'ble'
+        )
+    } catch (error) {
+        console.error('Failed to start scan:', error)
+        ElMessage.error('Failed to start scan')
+    }
+}
 
 /**
  * @description 连接蓝牙设备
  * @param {Object} device - 要连接的设备
- * @param {string} device.address - 设备MAC地址
- * @param {string} [device.name] - 设备名称
- * @param {number} device.rssi - 信号强度
- * @throws {ElMessage} 当设备已连接时，显示警告消息
  */
-const connectDevice = (device) => {
-    device.id = device.address
-    const existingDevice = bluetoothStore.connectedDevices.find(d => d.address === device.address)
-    if (existingDevice) {
-        ElMessage.warning('设备已连接')
-        return
+async function connectDevice(device) {
+    try {
+        // 检查设备是否已连接
+        if (bluetoothStore.connectedDevices.some(d => d.address === device.address)) {
+            ElMessage.warning('Device is already connected')
+            return
+        }
+
+        // 使用deviceManager创建设备
+        const devID = await deviceManager.deviceCreate({
+            address: device.address,
+            name: device.name || 'Unknown Device',
+            rssi: device.rssi,
+            type: 'peripheral'
+        })
+
+        // 更新store
+        bluetoothStore.addConnectedDevice({
+            ...device,
+            devID
+        })
+
+        ElMessage.success('Device connected successfully')
+        scanDialogVisible.value = false
+    } catch (error) {
+        console.error('Failed to connect device:', error)
+        ElMessage.error('Failed to connect device')
     }
-    console.log('添加设备', device)
-    bluetoothStore.addConnectedDevice(device)
-    devices.value = [...bluetoothStore.connectedDevices]
+}
+
+/**
+ * @description 清除蓝牙设备
+ * @param {Object} [device] - 要清除的特定设备。如果不提供，则清除所有设备
+ */
+async function clearDevices(device) {
+    try {
+        if (!bluetoothStore.connectedDevices.length) {
+            ElMessage.warning('No connected devices')
+            return
+        }
+
+        if (device) {
+            // 清除特定设备
+            await deviceManager.deviceDestroy(device.devID)
+            bluetoothStore.removeConnectedDevice(device)
+            if (bluetoothStore.selectedDevice?.address === device.address) {
+                bluetoothStore.setSelectedDevice(null)
+            }
+        } else {
+            // 清除所有设备
+            for (const dev of bluetoothStore.connectedDevices) {
+                await deviceManager.deviceDestroy(dev.devID)
+            }
+            bluetoothStore.clearConnectedDevices()
+            bluetoothStore.setSelectedDevice(null)
+        }
+
+        ElMessage.success(device ? 'Device removed' : 'All devices removed')
+    } catch (error) {
+        console.error('Failed to clear devices:', error)
+        ElMessage.error('Failed to clear devices')
+    }
 }
 
 /**
@@ -244,20 +325,6 @@ const handleConfigSave = (data) => {
 }
 
 /**
- * @description 开始扫描蓝牙设备
- * @returns {void}
- * @todo 实现实际的扫描逻辑
- */
-const startScan = () => {
-    console.log('startScan')
-    // 模拟发现设备
-    discoveredDevices.value = [
-        { name: 'Device 1', address: '00:11:22:33:44:55', rssi: -90 },
-        { name: 'Device 2', address: '66:77:88:99:AA:BB', rssi: -75 }
-    ]
-}
-
-/**
  * @type {import('vue').ComputedRef<boolean>} 是否有已连接的设备
  */
 const hasConnectedDevices = computed(() => bluetoothStore.connectedDevices.length > 0)
@@ -268,30 +335,6 @@ watch(scanDialogVisible, (newValue) => {
         stopScan()
     }
 })
-
-/**
- * @description 清除蓝牙设备
- * @param {Object} [device] - 要清除的特定设备。如果不提供，则清除所有设备
- * @param {string} device.id - 设备ID
- * @param {string} device.address - 设备MAC地址
- * @param {string} device.name - 设备名称
- * @throws {ElMessage} 当没有已连接的设备时，显示警告消息
- */
-const clearDevices = (device) => {
-    if (bluetoothStore.connectedDevices.length === 0) {
-        ElMessage.warning('没有已连接的设备')
-        return
-    }
-
-    if (device) {
-        bluetoothStore.removeConnectedDevice(device)
-        console.log('删除指定设备', device)
-    } else {
-        bluetoothStore.clearConnectedDevices()
-        console.log('删除所有设备')
-    }
-    devices.value = [...bluetoothStore.connectedDevices]
-}
 </script>
 
 <style scoped>
@@ -313,9 +356,10 @@ const clearDevices = (device) => {
 /* 滑动面板样式 */
 .sliding-panel {
     position: absolute;
-    left: -300px; /* 初始状态隐藏 */
+    left: -300px;
+    /* 初始状态隐藏 */
     top: 10px;
-    bottom: 10px;    
+    bottom: 10px;
     width: 300px;
     background: #f8fdff;
     border-radius: 8px;
@@ -325,13 +369,14 @@ const clearDevices = (device) => {
 }
 
 .sliding-panel.panel-open {
-    left: 20px; /* 修改为20px，使其与拓扑图保持距离 */
+    left: 20px;
+    /* 修改为20px，使其与拓扑图保持距离 */
 }
 
 /* 设备列表样式调整 */
 .device-list {
     height: 100%;
-    padding: 15px;    
+    padding: 15px;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -516,7 +561,8 @@ const clearDevices = (device) => {
 }
 
 .device-item.selected {
-    background-color: color-mix(in srgb, var(--el-menu-hover-bg-color) 80%, rgb(129, 248, 222)) !important;;
+    background-color: color-mix(in srgb, var(--el-menu-hover-bg-color) 80%, rgb(129, 248, 222)) !important;
+    ;
     border-radius: 4px;
 }
 
@@ -537,5 +583,4 @@ const clearDevices = (device) => {
     /* 增加按钮的大小 */
     transform: scale(1.5);
 }
-
 </style>
