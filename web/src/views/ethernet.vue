@@ -2,7 +2,11 @@
     <div class="eth-container">
         <el-main>
             <el-dialog title="新增连接" v-model="newConnDialogVisible" width="50%">
-
+                <el-form :model="form" label-width="100px" label-position="right">
+                    <el-form-item label="选择网卡">
+                        <Getif @configure="handleConfigure" />
+                    </el-form-item>
+                </el-form>
                 <template #footer>
                     <span class="dialog-footer">
                         <el-button @click="newConnDialogVisible = false">取消</el-button>
@@ -10,7 +14,7 @@
                     </span>
                 </template>
             </el-dialog>
-            <Ifconfig />
+            <Ifconfig v-if="ifconfigVisible" :iface="selectedInterface" @close="closeIfconfig" />
         </el-main>
         <el-button class="add-button" circle type="primary" :icon="Plus" @click="openNewConnDialog" />
         <el-button class="del-button" circle type="primary" :icon="DeleteFilled" @click="clearConns()" />
@@ -22,8 +26,12 @@ import { Plus, DeleteFilled } from '@element-plus/icons-vue'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import Ifconfig from '@/components/ethernet/Ifconfig.vue'
+import Getif from '@/components/ethernet/Getif.vue'
 
 const newConnDialogVisible = ref(false);
+const form = ref({});
+const ifconfigVisible = ref(false);
+const selectedInterface = ref('');
 
 const openNewConnDialog = () => {
     newConnDialogVisible.value = true
@@ -40,6 +48,16 @@ const newConn = () => {
 
 const clearConns = () => {
     // 实现清除设备逻辑
+}
+
+const handleConfigure = (iface) => {
+    console.log('Configure interface:', iface);
+    selectedInterface.value = iface;
+    ifconfigVisible.value = true;
+}
+
+const closeIfconfig = () => {
+    ifconfigVisible.value = false;
 }
 </script>
 
