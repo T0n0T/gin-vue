@@ -1,4 +1,5 @@
-import { exec } from 'child_process';
+import { execSync } from 'child_process';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -8,12 +9,17 @@ const __dirname = path.dirname(__filename);
 const PROTO_DIR = path.join(__dirname, '../src/proto');
 const OUTPUT_DIR = path.join(__dirname, '../src/proto');
 
-const command = `pbjs -t static-module -w es6 -o ${OUTPUT_DIR}/wireless.js ${PROTO_DIR}/wireless.proto`;
+// 获取所有 .proto 文件
+const protoFiles = fs.readdirSync(PROTO_DIR).filter(file => file.endsWith('.proto'));
 
-exec(command, (error, stdout, stderr) => {
-  if (error) {
-    console.error(`执行出错: ${error}`);
-    return;
-  }
-  console.log('Proto 文件生成成功！');
+// 遍历每个 .proto 文件并生成同名的 .js 文件
+protoFiles.forEach(protoFile => {
+    const protoFilePath = path.join(PROTO_DIR, protoFile);
+    const jsFileName = protoFile.replace('.proto', '.js');
+    const jsFilePath = path.join(OUTPUT_DIR, jsFileName);
+    const command = `pbjs -t static-module -w es6 -o ${jsFilePath} ${protoFilePath}`;
+    console.log(`Running command: ${command}`);
+
+    // 执行命令
+    execSync(command, { stdio: 'inherit' });
 });

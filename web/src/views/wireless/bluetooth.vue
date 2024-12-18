@@ -90,11 +90,11 @@
 
 import { ref, computed, onMounted, watch } from 'vue'
 import { Setting, Plus, DeleteFilled } from '@element-plus/icons-vue'
-import TopologyGraph from '@/components/topology/bluetooth.vue'
 import { useBluetoothStore } from '@/store/bluetooth'
 import { ElMessage } from 'element-plus'
 import { DeviceManager } from '@/core/devMngr'
 import { adapterApi } from '@/api/adapter'
+import TopologyGraph from '@/components/bluetooth/TopologyGraph.vue'
 import ConfigureDeviceDialog from '@/components/bluetooth/ConfigureDeviceDialog.vue'
 
 /**

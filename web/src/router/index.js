@@ -15,6 +15,10 @@ const routesOptions = [
                 component: () => import('@/views/stats.vue')
             },
             {
+                path: 'ethernet',
+                component: () => import('@/views/ethernet.vue')
+            },
+            {
                 path: 'wireless/bluetooth',
                 component: () => import('@/views/wireless/bluetooth.vue')
             },

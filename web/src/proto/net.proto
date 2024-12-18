@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package netctrl;
+
+option go_package = "microgw/api/proto/net";
+
+// 网卡设备配置消息
+message DeviceSpec {
+  string name = 1;        // 网卡名称
+  string mac = 2;         // MAC地址
+  NetworkConfig config = 3; // 网卡配置
+}
+
+// 网卡配置
+message NetworkConfig {
+  bool use_dhcp = 1;      // 是否使用DHCP
+  string gateway = 2;     // 网关地址
+  string mask = 3;        // 子网掩码
+  string ip_address = 4;  // IP地址
+}
+
+// 设备句柄
+message DeviceHandle {
+  string mac = 1;         // MAC地址
+}
+
+// 连接数据
+message ConnectData {
+  string url = 1;         // 连接URL (scheme://host:port)
+  string proxy_url = 2;   // 代理URL (scheme://host:port)
+  string spec = 3;        // 连接指定，约定为frontend提供的数据
+}

@@ -22,6 +22,14 @@
                 <span>路由配置</span>
             </el-menu-item>
 
+            <!-- 网络配置 -->
+            <el-menu-item index="ethernet">
+                <el-icon>
+                    <Link />
+                </el-icon>
+                <span>网络配置</span>
+            </el-menu-item>
+
             <!-- 无线配置子菜单 -->
             <el-sub-menu index="wireless">
                 <template #title>
@@ -56,7 +64,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Connection, Switch, DataLine } from '@element-plus/icons-vue'
+import { Connection, Switch, DataLine, Link } from '@element-plus/icons-vue'
 import { useBreadCrumbsStore } from '@/store/breadcrumbs'
 
 /**
@@ -94,6 +102,7 @@ const handleSelect = (index) => {
         '/': [''],
         'stats': ['数据统计'],
         'router': ['路由配置'],
+        'ethernet': ['网络配置'],
         'wireless/bluetooth': ['无线配置', 'Bluetooth'],
         'wireless/wlan': ['无线配置', 'WLAN'],
         'wireless/lorawan': ['无线配置', 'LoRaWan'],
@@ -110,6 +119,7 @@ const menuText = {
     '/': [''],
     '/stats': ['数据统计'],
     '/router': ['路由配置'],
+    '/ethernet': ['网络配置'],
     '/wireless/bluetooth': ['无线配置', 'Bluetooth'],
     '/wireless/wlan': ['无线配置', 'WLAN'],
     '/wireless/lorawan': ['无线配置', 'LoRaWan'],
@@ -174,7 +184,7 @@ watch(
     width: calc(100% - 20px);
 }
 
-/* 子菜单项��样式 */
+/* 子菜单项样式 */
 :deep(.el-sub-menu .el-menu-item) {
     min-width: unset !important;
     /* 覆盖默认的最小宽度 */

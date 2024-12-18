@@ -151,7 +151,7 @@ import { ElMessage } from 'element-plus'
 import { useConnectionStore } from '@/store/connect'
 import { storeToRefs } from 'pinia'
 import { useRouterStore } from '@/store/router'
-import RouterTopology from '@/components/topology/routerMngr.vue'
+import RouterTopology from '@/components/routerMngr/TopologyGraph.vue'
 
 /**
  * @type {import('vue').Ref<boolean>} 是否显示拓扑图视图
