@@ -69,7 +69,6 @@ onMounted(fetchInterfaces)
 
 .select-item {
   margin-right: 10px;
-  /* 可选：添加一些间距 */
 }
 
 .button-container {

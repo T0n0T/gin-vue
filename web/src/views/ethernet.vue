@@ -1,24 +1,10 @@
 <template>
     <div class="eth-container">
         <el-main>
-
-            <el-dialog :title="dialogTitle" v-model="newConnDialogVisible" width="50%">
-                <div v-if="!ifconfigVisible">
-                    <el-form :model="form" label-width="100px" label-position="right">
-                        <el-form-item label="新增连接">
-                            <Getif @configure="handleConfigure" />
-                        </el-form-item>
-                    </el-form>
-                </div>
-                <Ifconfig v-if="ifconfigVisible" :ifaceName="selectedInterfaceName" @close="closeIfconfig" @configSaved="handleConfigSaved"/>
-                <template #footer>
-                    <span style="margin-right: 30px;">
-                        <el-button type="text" :icon="CloseBold" @click="newConnDialogVisible = false" />
-                        <el-button type="text" :icon="Select" @click="newConn" style="margin-left: 30px;" />
-                    </span>
-                </template>
+            <el-dialog :title="dialogTitle" v-model="newConnDialogVisible" width="38.2%">
+                <Socket v-if="!ifconfigVisible" @configureIf="configureIf"/>
+                <Ifconfig v-if="ifconfigVisible" ifaceName="selectedInterfaceName.value"/>
             </el-dialog>
-
         </el-main>
         <el-button class="add-button" circle type="primary" :icon="Plus" @click="openNewConnDialog" />
         <el-button class="del-button" circle type="primary" :icon="DeleteFilled" @click="clearConns()" />
@@ -29,8 +15,8 @@
 import { Plus, DeleteFilled, CloseBold, Select } from '@element-plus/icons-vue'
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import Socket from '@/components/ethernet/Socket.vue' 
 import Ifconfig from '@/components/ethernet/Ifconfig.vue'
-import Getif from '@/components/ethernet/Getif.vue'
 
 const newConnDialogVisible = ref(false)
 const form = ref({})
@@ -43,6 +29,7 @@ const dialogTitle = computed(() => {
 
 const openNewConnDialog = () => {
     newConnDialogVisible.value = true
+    ifconfigVisible.value = false
     // 实现扫描对话框逻辑
 }
 
@@ -58,8 +45,8 @@ const clearConns = () => {
     // 实现清除设备逻辑
 }
 
-const handleConfigure = (ifaceName) => {
-    console.log('handleConfigure', ifaceName)
+const configureIf = (ifaceName) => {
+    console.log('configureIf', ifaceName)
     selectedInterfaceName.value = ifaceName
     ifconfigVisible.value = true
 }
