@@ -14,24 +14,12 @@
         <div v-else class="table-view">
             <!-- 添加搜索框 -->
             <div class="search-container">
-                <el-input
-                    v-model="searchQuery"
-                    placeholder="搜索路由名称或连接ID"
-                    prefix-icon="Search"
-                    clearable
-                    @input="handleSearch"
-                    style="width: 100%; margin-bottom: 15px;"
-                />
+                <el-input v-model="searchQuery" placeholder="搜索路由名称或连接ID" prefix-icon="Search" clearable
+                    @input="handleSearch" style="width: 100%; margin-bottom: 15px;" />
             </div>
-            
-            <el-table
-                ref="routeTable"
-                :data="filteredRoutes"
-                border
-                style="width: 100%"
-                highlight-current-row
-            >
-                <el-table-column prop="name" label="路由名称" >
+
+            <el-table ref="routeTable" :data="filteredRoutes" border style="width: 100%" highlight-current-row>
+                <el-table-column prop="name" label="路由名称">
                     <template #default="{ row }">
                         <el-tag>{{ row.routerName }}</el-tag>
                     </template>
@@ -63,7 +51,7 @@
         </div>
 
         <!-- 添加/编辑路由对话框 -->
-        <el-dialog v-model="routeDialogVisible" :title="editingRoute ? '编辑路由' : '添加路由'" width="500px">
+        <el-dialog v-model="routeDialogVisible" draggable :title="editingRoute ? '编辑路由' : '添加路由'" width="500px">
             <el-form :model="RouteForm" :rules="rules" label-width="auto">
                 <el-form-item label="路由名称" prop="routerName">
                     <el-input v-model="RouteForm.routerName">
@@ -257,7 +245,7 @@ const saveRoute = () => {
     } else {
         routerStore.addRoute(RouteForm.value)
     }
-    
+
     routeDialogVisible.value = false
     ElMessage.success(editingRoute.value ? '路由已更新' : '路由已添加')
 }
@@ -355,9 +343,9 @@ const routeTable = ref(null)
 // 过滤后的路由列表
 const filteredRoutes = computed(() => {
     if (!searchQuery.value) return routes.value
-    
+
     const query = searchQuery.value.toLowerCase()
-    return routes.value.filter(route => 
+    return routes.value.filter(route =>
         route.routerName.toLowerCase().includes(query) ||
         route.input.connectionId.toLowerCase().includes(query) ||
         route.output.connectionId.toLowerCase().includes(query)
@@ -367,18 +355,18 @@ const filteredRoutes = computed(() => {
 // 处理搜索
 const handleSearch = () => {
     if (!searchQuery.value) return
-    
+
     // 找到第一个匹配的行索引
-    const index = filteredRoutes.value.findIndex(route => 
+    const index = filteredRoutes.value.findIndex(route =>
         route.routerName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         route.input.connectionId.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
         route.output.connectionId.toLowerCase().includes(searchQuery.value.toLowerCase())
     )
-    
+
     if (index > -1) {
         // 设置当前行高亮
         routeTable.value?.setCurrentRow(filteredRoutes.value[index])
-        
+
         // 确保该行在视图中可见
         const row = document.querySelector(`.el-table__row:nth-child(${index + 1})`)
         row?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -386,7 +374,7 @@ const handleSearch = () => {
 }
 
 const routerStore = useRouterStore()
-const { routes } =storeToRefs(routerStore)
+const { routes } = storeToRefs(routerStore)
 
 onMounted(() => {
     // store中的数据会自动加载，不需要额外操作

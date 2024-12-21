@@ -1,30 +1,40 @@
 <template>
-    <div class="eth-container">
-        <el-main>
-            <el-dialog :title="dialogTitle" v-model="newConnDialogVisible" width="38.2%">
-                <Socket v-if="!ifconfigVisible" @configureIf="configureIf"/>
-                <Ifconfig v-if="ifconfigVisible" ifaceName="selectedInterfaceName.value"/>
-            </el-dialog>
-        </el-main>
-        <el-button class="add-button" circle type="primary" :icon="Plus" @click="openNewConnDialog" />
-        <el-button class="del-button" circle type="primary" :icon="DeleteFilled" @click="clearConns()" />
-    </div>
+<div class="eth-container">
+    <el-main class="eth-view">
+        <el-dialog width="38.2%" :show-close="true" draggable v-model="newConnDialogVisible" @close="DialogClose">
+            <template #header="{ titleId, titleClass }">
+                <div style="display: flex; justify-content: space-between; align-self: center;">
+                    <h4 :id="titleId" :class="titleClass">{{ dialogTitle }}</h4>
+                </div>
+            </template>
+            <KeepAlive :exclude="excludeComponents">
+                <Socket v-if="!ifconfigVisible && newConnDialogVisible" @configureIf="checkoutIfconfig"
+                    @socketDialogSubmit="newConnDialogSubmit" @socketDialogclose="DialogClose" />
+                <Ifconfig v-else :ifaceName="selectedInterfaceName" @submit="ifconfigVisible = false"
+                    @close="ifconfigVisible = false" />
+            </KeepAlive>
+
+        </el-dialog>
+    </el-main>
+    <el-button class="add-button" circle type="primary" :icon="Plus" @click="openNewConnDialog" />
+    <el-button class="del-button" circle type="primary" :icon="DeleteFilled" @click="clearConns()" />
+</div>
 </template>
 
 <script setup>
-import { Plus, DeleteFilled, CloseBold, Select } from '@element-plus/icons-vue'
+import { Plus, DeleteFilled } from '@element-plus/icons-vue'
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import Socket from '@/components/ethernet/Socket.vue' 
+import Socket from '@/components/ethernet/Socket.vue'
 import Ifconfig from '@/components/ethernet/Ifconfig.vue'
 
 const newConnDialogVisible = ref(false)
-const form = ref({})
-const selectedInterfaceName = ref('')
 const ifconfigVisible = ref(false)
+const selectedInterfaceName = ref('')
+const excludeComponents = ref([])
 
 const dialogTitle = computed(() => {
-    return ifconfigVisible.value ? '网卡配置' : '新增连接'
+    return ifconfigVisible.value ? selectedInterfaceName.value : '新增连接'
 })
 
 const openNewConnDialog = () => {
@@ -33,7 +43,7 @@ const openNewConnDialog = () => {
     // 实现扫描对话框逻辑
 }
 
-const newConn = () => {
+const newConnDialogSubmit = () => {
     newConnDialogVisible.value = false;
     ElMessage({
         message: '连接创建成功',
@@ -45,19 +55,29 @@ const clearConns = () => {
     // 实现清除设备逻辑
 }
 
-const configureIf = (ifaceName) => {
-    console.log('configureIf', ifaceName)
+const checkoutIfconfig = (ifaceName) => {
+    if (!ifaceName) {
+        ElMessage({
+            message: '需要选择网卡',
+            type: 'warning'
+        })
+        return
+    }
+
+    console.log('checkout to configureIf page', ifaceName)
     selectedInterfaceName.value = ifaceName
     ifconfigVisible.value = true
 }
 
-const closeIfconfig = () => {
-    ifconfigVisible.value = false
+const DialogClose = () => {
+    newConnDialogVisible.value = false;
+    ifconfigVisible.value = false;
+    excludeComponents.value.push('Socket') // 关闭对话框时将 Socket 组件排除
+    setTimeout(() => {
+        excludeComponents.value = [] // 重置排除列表，以便下次打开时重新缓存
+    }, 0)
 }
 
-const handleConfigSaved = () => {
-    ifconfigVisible.value = false
-}
 </script>
 
 <style scoped>
@@ -65,6 +85,13 @@ const handleConfigSaved = () => {
     height: calc(100vh - 100px);
     padding: 10px;
     border-radius: 8px;
+}
+
+.eth-view {
+    height: 100%;
+    background: #f5f7fa;
+    border-radius: 8px;
+    padding: 20px;
 }
 
 .add-button {
