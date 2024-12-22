@@ -1,7 +1,7 @@
 <template>
 <div class="getif">
   <div class="select-and-buttons">
-    <el-select v-model="selectedInterfaceName" placeholder="请选择网卡" @change="handleInterfaceChange" class="select-item">
+    <el-select v-model="selectedInterfaceName" placeholder="请选择网卡" @change="interfaceChange" class="select-item">
       <el-option v-for="item in interfaceNameList" :key="item.name" :label="item.name" :value="item.name">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <span>
@@ -17,8 +17,8 @@
       </el-option>
     </el-select>
     <div class="button-container">
-      <el-button circle plain type="text" :icon="Refresh" @click="fetchInterfaces"></el-button>
-      <el-button circle plain type="text" :icon="Setting" @click.stop="configureInterface"></el-button>
+      <el-button circle plain type="text" :icon="Refresh" @click="interfaceFetch"></el-button>
+      <el-button circle plain type="text" :icon="Setting" @click.stop="interfaceConfigurate"></el-button>
     </div>
   </div>
 </div>
@@ -35,26 +35,26 @@ const interfaceNameList = ref([
   { name: 'wlan0', available: false },
   { name: 'usb0', available: true }
 ]);
-const emit = defineEmits(['update:ifaceName', 'configureInterface'])
+const emit = defineEmits(['update:ifaceName', 'interfaceNeedConfig'])
 
 const selectedInterfaceName = computed({
   get: () => props.ifaceName,
   set: (value) => emit('update:ifaceName', value)
 })
 
-const fetchInterfaces = async () => {
+const interfaceFetch = async () => {
   ElMessage.info('获取网卡')
 }
 
-const handleInterfaceChange = (value) => {
+const interfaceChange = (value) => {
   console.log('Selected interface:', value)
 }
 
-const configureInterface = () => {
-  emit('configureInterface', props.ifaceName)
+const interfaceConfigurate = () => {
+  emit('interfaceNeedConfig', props.ifaceName)
 };
 
-onMounted(fetchInterfaces)
+onMounted(interfaceFetch)
 </script>
 
 <style scoped>

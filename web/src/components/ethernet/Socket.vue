@@ -1,7 +1,7 @@
 <template><el-main style="padding: 0% 5% 0% 5%;">
     <el-form :model="configForm" label-width="100px" label-position="right">
         <el-form-item label="新增连接">
-            <GetIf v-model:ifaceName="configForm.interfaceName" @configureInterface="handleConfigure" />
+            <GetIf v-model:ifaceName="configForm.interfaceName" @interfaceNeedConfig="interfaceDoConfigurate" />
         </el-form-item>
         <el-form-item label="协议">
             <el-select v-model="configForm.selectedProtocol" placeholder="选择一种协议">
@@ -25,18 +25,30 @@ import { ElMessage } from 'element-plus'
 import { CloseBold, Select } from '@element-plus/icons-vue'
 import GetIf from '@/components/ethernet/GetIf.vue'
 
-const configForm = ref({
-    interfaceName: '',
-    selectedProtocol: '',
-    remoteUrl: ''
+const props = defineProps({
+    isEdit: Boolean,
+    formData: {
+        type: Object,
+        default: () => ({
+            id: 0,
+            interfaceName: '',
+            selectedProtocol: '',
+            remoteUrl: ''
+        })
+    }
 })
 
-const emit = defineEmits(['configureIf', 'socketDialogSubmit', 'socketDialogclose'])
+const configForm = ref(props.formData)
 
-const handleConfigure = (data) => {
+const emit = defineEmits([
+    'interfaceConfigurate', 
+    'socketDialogSubmit', 
+    'socketDialogclose',
+])
+
+const interfaceDoConfigurate = (data) => {
     configForm.interfaceName = data
-    console.log('handleConfigure', data)
-    emit('configureIf', data)
+    emit('interfaceConfigurate', data)
 }
 
 const saveConfig = () => {
@@ -45,7 +57,7 @@ const saveConfig = () => {
             message: '配置已保存',
             type: 'success'
         });
-        emit('socketDialogSubmit')
+        emit('socketDialogSubmit', props.isEdit ,configForm.value)
         closePanel()
     } else {
         console.log('error socket submit!!')
@@ -54,7 +66,6 @@ const saveConfig = () => {
 }
 
 const closePanel = () => {
-    // resetForm(); // 注释掉 resetForm()
     emit('socketDialogclose');
 };
 

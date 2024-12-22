@@ -92,7 +92,6 @@ const emit = defineEmits(['submit', 'close'])
 
 const ifconfigSubmit = () => {
     if (configForm) {
-        console.log('Form submitted:', configForm.value)
         configForm.value.ifaceName = props.ifaceName; // 添加ifaceName成员
         console.log('Updated form with ifaceName:', configForm.value); // 打印表单
         ElMessage({

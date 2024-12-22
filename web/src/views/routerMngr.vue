@@ -1,130 +1,130 @@
 <template>
-    <div class="router-container">
-        <!-- 视图切换图标 -->
-        <div class="view-toggle-icon">
-            <el-button circle type="primary" :icon="viewIcon" @click="toggleView" />
-        </div>
-
-        <!-- 拓扑视图 -->
-        <div v-if="isTopologyView" class="topology-view">
-            <RouterTopology :routes="routes" @selectRoute="handleRouteSelect" />
-        </div>
-
-        <!-- 表格视图 -->
-        <div v-else class="table-view">
-            <!-- 添加搜索框 -->
-            <div class="search-container">
-                <el-input v-model="searchQuery" placeholder="搜索路由名称或连接ID" prefix-icon="Search" clearable
-                    @input="handleSearch" style="width: 100%; margin-bottom: 15px;" />
-            </div>
-
-            <el-table ref="routeTable" :data="filteredRoutes" border style="width: 100%" highlight-current-row>
-                <el-table-column prop="name" label="路由名称">
-                    <template #default="{ row }">
-                        <el-tag>{{ row.routerName }}</el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="input.type" label="数据入口">
-                    <template #default="{ row }">
-                        <el-tag>{{ getInterfaceTypeName(row.input.type) }}</el-tag>
-                        <el-tag>ID: {{ row.input.connectionId }}</el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column prop="output.type" label="数据出口">
-                    <template #default="{ row }">
-                        <el-tag>{{ getInterfaceTypeName(row.output.type) }}</el-tag>
-                        <el-tag>ID: {{ row.output.connectionId }}</el-tag>
-                    </template>
-                </el-table-column>
-                <el-table-column label="操作" width="120">
-                    <template #default="{ row }">
-                        <el-button text type="primary" circle @click="editRoute(row)">编辑</el-button>
-                        <el-button text type="danger" circle @click="deleteRoute(row)">删除</el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </div>
-
-        <!-- 添加路由按钮 -->
-        <div class="add-button">
-            <el-button circle type="primary" :icon="Plus" @click="openRouteDialog" />
-        </div>
-
-        <!-- 添加/编辑路由对话框 -->
-        <el-dialog v-model="routeDialogVisible" draggable :title="editingRoute ? '编辑路由' : '添加路由'" width="500px">
-            <el-form :model="RouteForm" :rules="rules" label-width="auto">
-                <el-form-item label="路由名称" prop="routerName">
-                    <el-input v-model="RouteForm.routerName">
-                        <template #append>
-                            <el-button @click="generateRouteName">自动生成</el-button>
-                        </template>
-                    </el-input>
-                </el-form-item>
-                <el-form-item label="数据入口">
-                    <el-row style="width: 100%">
-                        <el-col :span="7">
-                            <el-form-item prop="input.type">
-                                <el-select v-model="RouteForm.input.type" placeholder="选择类型"
-                                    @change="() => RouteForm.input.connectionId = ''" style="width: 100%">
-                                    <el-option label="蓝牙" value="bluetooth" />
-                                    <el-option label="网络连接" value="network" />
-                                </el-select>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="1">
-                        </el-col>
-                        <el-col :span="16">
-                            <el-form-item prop="input.connectionId">
-                                <el-select v-model="RouteForm.input.connectionId" filterable placeholder="请选择连接ID"
-                                    :disabled="!RouteForm.input.type" style="width: 100%">
-                                    <el-option v-for="conn in filteredInputConnections" :key="conn.id" :label="conn.id"
-                                        :value="conn.id">
-                                        <span>ID: {{ conn.id }}</span>
-                                        <span style="float: right; color: #8492a6; font-size: 13px">
-                                            {{ conn.type === 'bluetooth' ? conn.name : conn.address }}
-                                        </span>
-                                    </el-option>
-                                </el-select>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-                </el-form-item>
-                <el-form-item label="数据出口">
-                    <el-row style="width: 100%">
-                        <el-col :span="7">
-                            <el-form-item prop="output.type">
-                                <el-select v-model="RouteForm.output.type" placeholder="选择类型"
-                                    @change="() => RouteForm.output.connectionId = ''" style="width: 100%">
-                                    <el-option label="蓝牙" value="bluetooth" />
-                                    <el-option label="网络连接" value="network" />
-                                </el-select>
-                            </el-form-item>
-                        </el-col>
-                        <el-col :span="1">
-                        </el-col>
-                        <el-col :span="16">
-                            <el-form-item prop="output.connectionId">
-                                <el-select v-model="RouteForm.output.connectionId" filterable placeholder="请选择连接ID"
-                                    :disabled="!RouteForm.output.type" style="width: 100%">
-                                    <el-option v-for="conn in filteredOutputConnections" :key="conn.id" :label="conn.id"
-                                        :value="conn.id">
-                                        <span>ID: {{ conn.id }}</span>
-                                        <span style="float: right; color: #8492a6; font-size: 13px">
-                                            {{ conn.type === 'bluetooth' ? conn.name : conn.address }}
-                                        </span>
-                                    </el-option>
-                                </el-select>
-                            </el-form-item>
-                        </el-col>
-                    </el-row>
-                </el-form-item>
-            </el-form>
-            <template #footer>
-                <el-button @click="routeDialogVisible = false">取消</el-button>
-                <el-button type="primary" @click="saveRoute">确定</el-button>
-            </template>
-        </el-dialog>
+<div class="router-container">
+    <!-- 视图切换按钮 -->
+    <div class="view-toggle-icon">
+        <el-button circle type="primary" :icon="viewIcon" @click="toggleView" />
     </div>
+
+    <!-- 添加路由按钮 -->
+    <div class="add-button">
+        <el-button circle type="primary" :icon="Plus" @click="openRouteDialog" />
+    </div>
+    
+    <!-- 拓扑视图 -->
+    <div v-if="isTopologyView" class="topology-view">
+        <RouterTopology :routes="routes" @selectRoute="handleRouteSelect" />
+    </div>
+
+    <!-- 表格视图 -->
+    <div v-else class="table-view">
+        <!-- 添加搜索框 -->
+        <div class="search-container">
+            <el-input v-model="searchQuery" placeholder="搜索路由名称或连接ID" prefix-icon="Search" clearable
+                @input="handleSearch" style="width: 100%; margin-bottom: 15px;" />
+        </div>
+
+        <el-table ref="routeTable" :data="filteredRoutes" border style="width: 100%" highlight-current-row>
+            <el-table-column prop="name" label="路由名称">
+                <template #default="{ row }">
+                    <el-tag>{{ row.routerName }}</el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="input.type" label="数据入口">
+                <template #default="{ row }">
+                    <el-tag>{{ getInterfaceTypeName(row.input.type) }}</el-tag>
+                    <el-tag>ID: {{ row.input.connectionId }}</el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column prop="output.type" label="数据出口">
+                <template #default="{ row }">
+                    <el-tag>{{ getInterfaceTypeName(row.output.type) }}</el-tag>
+                    <el-tag>ID: {{ row.output.connectionId }}</el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120">
+                <template #default="{ row }">
+                    <el-button text type="primary" circle @click="editRoute(row)">编辑</el-button>
+                    <el-button text type="danger" circle @click="deleteRoute(row)">删除</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </div>
+
+    <!-- 添加/编辑路由对话框 -->
+    <el-dialog v-model="routeDialogVisible" draggable :title="editingRoute ? '编辑路由' : '添加路由'" width="500px">
+        <el-form :model="RouteForm" :rules="rules" label-width="auto">
+            <el-form-item label="路由名称" prop="routerName">
+                <el-input v-model="RouteForm.routerName">
+                    <template #append>
+                        <el-button @click="generateRouteName">自动生成</el-button>
+                    </template>
+                </el-input>
+            </el-form-item>
+            <el-form-item label="数据入口">
+                <el-row style="width: 100%">
+                    <el-col :span="7">
+                        <el-form-item prop="input.type">
+                            <el-select v-model="RouteForm.input.type" placeholder="选择类型"
+                                @change="() => RouteForm.input.connectionId = ''" style="width: 100%">
+                                <el-option label="蓝牙" value="bluetooth" />
+                                <el-option label="网络连接" value="network" />
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="1">
+                    </el-col>
+                    <el-col :span="16">
+                        <el-form-item prop="input.connectionId">
+                            <el-select v-model="RouteForm.input.connectionId" filterable placeholder="请选择连接ID"
+                                :disabled="!RouteForm.input.type" style="width: 100%">
+                                <el-option v-for="conn in filteredInputConnections" :key="conn.id" :label="conn.id"
+                                    :value="conn.id">
+                                    <span>ID: {{ conn.id }}</span>
+                                    <span style="float: right; color: #8492a6; font-size: 13px">
+                                        {{ conn.type === 'bluetooth' ? conn.name : conn.address }}
+                                    </span>
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </el-form-item>
+            <el-form-item label="数据出口">
+                <el-row style="width: 100%">
+                    <el-col :span="7">
+                        <el-form-item prop="output.type">
+                            <el-select v-model="RouteForm.output.type" placeholder="选择类型"
+                                @change="() => RouteForm.output.connectionId = ''" style="width: 100%">
+                                <el-option label="蓝牙" value="bluetooth" />
+                                <el-option label="网络连接" value="network" />
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                    <el-col :span="1">
+                    </el-col>
+                    <el-col :span="16">
+                        <el-form-item prop="output.connectionId">
+                            <el-select v-model="RouteForm.output.connectionId" filterable placeholder="请选择连接ID"
+                                :disabled="!RouteForm.output.type" style="width: 100%">
+                                <el-option v-for="conn in filteredOutputConnections" :key="conn.id" :label="conn.id"
+                                    :value="conn.id">
+                                    <span>ID: {{ conn.id }}</span>
+                                    <span style="float: right; color: #8492a6; font-size: 13px">
+                                        {{ conn.type === 'bluetooth' ? conn.name : conn.address }}
+                                    </span>
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </el-form-item>
+        </el-form>
+        <template #footer>
+            <el-button @click="routeDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="saveRoute">确定</el-button>
+        </template>
+    </el-dialog>
+</div>
 </template>
 
 <script setup>
@@ -134,7 +134,7 @@
  */
 
 import { ref, computed, reactive, onMounted } from 'vue'
-import { Plus, Grid, View, Search } from '@element-plus/icons-vue'
+import { Plus, Grid, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useConnectionStore } from '@/store/connect'
 import { storeToRefs } from 'pinia'
@@ -144,7 +144,7 @@ import RouterTopology from '@/components/routerMngr/TopologyGraph.vue'
 /**
  * @type {import('vue').Ref<boolean>} 是否显示拓扑图视图
  */
-const isTopologyView = ref(true)
+const isTopologyView = ref(false)
 
 /**
  * @type {import('vue').Ref<boolean>} 路由对话框是否可见
