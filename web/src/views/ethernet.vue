@@ -107,7 +107,7 @@ const DialogClose = () => {
     }, 0);
 };
 
-const saveConn = (isEdit, value) => {
+const saveConn =(value) => {
     console.log('isEdit:', isEdit);
     console.log('value:', value);
     if (isEdit.value) {

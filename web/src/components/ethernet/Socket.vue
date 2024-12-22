@@ -57,7 +57,7 @@ const saveConfig = () => {
             message: '配置已保存',
             type: 'success'
         });
-        emit('socketDialogSubmit', props.isEdit ,configForm.value)
+        emit('socketDialogSubmit', configForm.value)
         closePanel()
     } else {
         console.log('error socket submit!!')
