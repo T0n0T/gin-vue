@@ -88,7 +88,7 @@ const resetForm = () => {
     };
 };
 
-const emit = defineEmits(['submit', 'close'])
+const emit = defineEmits(['ifconfigSubmit', 'ifconfigClose'])
 
 const ifconfigSubmit = () => {
     if (configForm) {
@@ -99,7 +99,7 @@ const ifconfigSubmit = () => {
             type: 'success'
         });
         resetForm()
-        emit('submit')
+        emit('ifconfigSubmit')
     } else {
         console.log('error ifconfig submit!!')
         return false
@@ -107,7 +107,7 @@ const ifconfigSubmit = () => {
 }
 
 const ifconfigClose = () => {
-    emit('close')
+    emit('ifconfigClose')
 }
 
 onMounted(() => {

@@ -7,22 +7,22 @@
                         <h4 :id="titleId" :class="titleClass">{{ dialogTitle }}</h4>
                     </div>
                 </template>
-                <KeepAlive :exclude="excludeComponents">
-                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow"
-                        @interfaceConfigurate="checkoutIfconfig" @socketDialogSubmit="saveConn"
+                <KeepAlive :exclude="keepAliveExclude">
+                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow" :interfaceNameList="ifacesList"
+                        @ifaceConfigure="checkoutIfconfig" @ifaceFetch="fetchIfaces" @socketDialogSubmit="saveConn"
                         @socketDialogclose="DialogClose" />
-                    <Ifconfig v-else :ifaceName="selectedInterfaceName" @submit="ifconfigVisible = false"
-                        @close="ifconfigVisible = false" />
+                    <Ifconfig v-else :ifaceName="selectedInterfaceName" @ifconfigSubmit="ifconfigVisible = false"
+                        @ifconfigClose="ifconfigVisible = false" />
                 </KeepAlive>
             </el-dialog>
             <div class="search-container">
                 <el-input v-model="searchQuery" placeholder="搜索连接名称或协议" prefix-icon="Search" clearable
                     @input="handleSearch" style="width: 100%; margin-bottom: 15px;" />
             </div>
-            <el-table ref="ethConnTable" :data="filteredConnections" border style="width: 100%" highlight-current-row>
+            <el-table ref="ethConnTable" :data="filteredConnections" :border="true" style="width: 100%" highlight-current-row>
                 <el-table-column prop="interfaceName" label="连接名称" />
                 <el-table-column prop="selectedProtocol" label="协议" />
-                <el-table-column prop="remoteUrl" label="远端URL" />
+                <el-table-column prop="remoteAddr" label="远端URL" />
                 <el-table-column label="操作" width="120">
                     <template #default="{ $index, row }">
                         <el-button text type="primary" circle @click="editConn(row)">编辑</el-button>
@@ -41,11 +41,11 @@ import { Plus, DeleteFilled } from '@element-plus/icons-vue';
 import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { v5 as uuidv5 } from 'uuid';
-import { DeviceManager } from '@/core/devMngr'
-import { netctl } from '@/proto/net'
+import { DeviceManager } from '../core/devMngr'
+import { netctrl } from '../proto/net'
 
-import Socket from '@/components/ethernet/Socket.vue';
-import Ifconfig from '@/components/ethernet/Ifconfig.vue';
+import Socket from '../components/ethernet/Socket.vue';
+import Ifconfig from '../components/ethernet/Ifconfig.vue';
 
 const deviceManager = new DeviceManager(
     'net',
@@ -62,34 +62,78 @@ const deviceManager = new DeviceManager(
     (connectData) => connectData.spec // 使用连接ID作为连接标识
 )
 
+// 可视化
 const newConnDialogVisible = ref(false);
 const ifconfigVisible = ref(false);
-const selectedInterfaceName = ref('');
-const excludeComponents = ref([]);
+
+
+// 对话框内容
 const isEdit = ref(false);
 const editingRow = ref({});
-const ethConnTable = ref(null);
-const searchQuery = ref('');
-
+const keepAliveExclude = ref([]);
 const dialogTitle = computed(() => {
     let connTitle = isEdit.value ? '编辑连接' : '新增连接';
     return ifconfigVisible.value ? selectedInterfaceName.value : connTitle;
 });
 
+// 网卡选择
+const ifacesMap = ref(new Map())
+const selectedInterfaceName = ref('');
+
+// 连接表格
+const ethConnTable = ref(null);
+const searchQuery = ref('');
 const filteredConnections = computed(() => {
-    if (!searchQuery.value) return ethernetStore.connections;
+    const devices = deviceManager.store.devices;
+    const connections = []; // 用于存储最终的连接信息
+
+    // 遍历 devices
+    for (const [deviceHandle, device] of devices) {
+        // 使用 deviceHandle 在 ifacesMap 中查找对应的接口
+        const iface = ifacesMap.value.get(deviceHandle);
+        if (iface) {
+            const interfaceName = iface.name; // 获取接口名称
+
+            // 遍历 device 的 connectMap
+            for (const [_, connData] of Object.entries(device.connectMap)) {
+                // connData 应该包含 url
+                const url = connData.url; // 假设 url 的形式是 scheme://ip:port
+                const [scheme, rest] = url.split('://'); // 解析 scheme
+                const [ip, port] = rest.split(':'); // 解析 ip 和 port
+
+                // 构建连接对象
+                connections.push({
+                    interfaceName: interfaceName,
+                    selectedProtocol: scheme, // 使用 scheme 作为 selectedProtocol
+                    remoteAddr: `${ip}:${port}` // 使用 ip:port 作为 remoteAddr
+                });
+            }
+        }
+    }
+
+    // 如果没有搜索查询，返回所有连接
+    if (!searchQuery.value) {
+        return connections;
+    }
 
     const query = searchQuery.value.toLowerCase();
-    return ethernetStore.connections.filter(conn =>
+    return connections.filter(conn =>
         conn.interfaceName.toLowerCase().includes(query) ||
-        conn.selectedProtocol.toLowerCase().includes(query)
+        conn.selectedProtocol.toLowerCase().includes(query) ||
+        conn.remoteAddr.toLowerCase().includes(query)
     );
 });
 
 const openNewConnDialog = () => {
     newConnDialogVisible.value = true;
     ifconfigVisible.value = false;
-    // 实现扫描对话框逻辑
+};
+
+const fetchIfaces = () => {
+    deviceManager.adapterScan(true, (scanResponse) => {
+        console.log(scanResponse)
+        ifacesMap.set(scanResponse.ctx, scanResponse.ctx)
+    }, 3000);
 };
 
 const clearConns = () => {
@@ -117,21 +161,21 @@ const checkoutIfconfig = (ifaceName) => {
 const DialogClose = () => {
     newConnDialogVisible.value = false;
     ifconfigVisible.value = false;
-    excludeComponents.value.push('Socket'); // 关闭对话框时将 Socket 组件排除
+    keepAliveExclude.value.push('Socket'); // 关闭对话框时将 Socket 组件排除
     setTimeout(() => {
-        excludeComponents.value = []; // 重置排除列表，以便下次打开时重新缓存
+        keepAliveExclude.value = []; // 重置排除列表，以便下次打开时重新缓存
     }, 0);
 };
 
 const saveConn = (value) => {
     if (isEdit.value) {
         // 编辑现有连接
-        ethernetStore.updateConnection(editingRow.value, value);
+        // ethernetStore.updateConnection(editingRow.value, value);
         console.log('编辑连接:', editingRow.value);
     } else {
         // 新增连接
         console.log('新增连接:', value);
-        ethernetStore.addConnection(value);
+        // ethernetStore.addConnection(value);
     }
 
     // 重置编辑状态并关闭对话框
@@ -147,13 +191,13 @@ const editConn = (row) => {
     isEdit.value = true;
     newConnDialogVisible.value = true;
     ifconfigVisible.value = false;
-    excludeComponents.value = [];
+    keepAliveExclude.value = [];
 };
 
 const deleteConn = (row) => {
     // 删除连接逻辑
     console.log('删除连接:', row);
-    ethernetStore.removeConnection(row);
+    // ethernetStore.removeConnection(row);
     ElMessage.success('连接删除成功')
 };
 

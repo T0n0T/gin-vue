@@ -12,24 +12,9 @@ import { DeviceManager } from '../core/devMngr'
  * 使用Pinia创建的设备管理Store
  * @returns {Object} 设备管理Store实例
  */
-export const useDeviceStore = defineStore('device', () => {
+export const useDeviceStore = (deviceType) => defineStore(deviceType, () => {
     // 存储设备列表
     const devices = ref(new Map())
-    // 存储DeviceManager实例
-    const deviceManager = ref(null)
-
-    // 初始化DeviceManager
-    const initDeviceManager = (deviceType, deviceIdentify, connectIdentify) => {
-        if (!deviceManager.value) {
-            deviceManager.value = new DeviceManager(deviceType, deviceIdentify, connectIdentify)
-        }
-        return deviceManager.value
-    }
-
-    // 获取DeviceManager实例
-    const getDeviceManager = () => {
-        return deviceManager.value
-    }
 
     // 添加设备
     const addDevice = (device) => {
@@ -48,9 +33,6 @@ export const useDeviceStore = defineStore('device', () => {
 
     return {
         devices,
-        deviceManager,
-        getDeviceManager,
-        initDeviceManager,
         addDevice,
         getDevice,
         removeDevice

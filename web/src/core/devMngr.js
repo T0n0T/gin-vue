@@ -1,7 +1,7 @@
-import { deviceApi } from '@/api/device'
-import { adapterApi } from '@/api/adapter'
-import { useDeviceStore } from '@/store/device'
-import { api, google } from '@/proto/wireless'
+import { deviceApi } from '../api/device'
+import { adapterApi } from '../api/adapter'
+import { useDeviceStore } from '../store/device'
+import { api, google } from '../proto/wireless'
 
 /**
  * 设备连接类
@@ -11,9 +11,10 @@ import { api, google } from '@/proto/wireless'
  * @property {Object|null} connConfig - 连接配置信息
  */
 class Connect {
-    constructor(connID, status = false) {
+    constructor(connID, connData=null, status = false) {
         this.connID = connID
         this.status = status // available状态
+        this.connData = connData
     }
 }
 
@@ -54,15 +55,10 @@ class Device {
  */
 export class DeviceManager {
     constructor(deviceType, deviceIdentify, connectIdentify) {
-        this.adapterState = {
-            isAlive: false,
-            isScanActivate: false,
-            AdapterName: '',
-        }
         this.deviceType = deviceType
         this.deviceIdentify = deviceIdentify
         this.connectIdentify = connectIdentify
-        this.store = useDeviceStore()
+        this.store = useDeviceStore(deviceType)
     }
 
     async adapterCheck() {
@@ -74,9 +70,9 @@ export class DeviceManager {
             // 解码proto返回的数据
             const decodedResponse = api.wireless.v1.AdapterCheckResponse.decode(response)
             // 处理返回的连接状态列表
-            this.adapterState.AdapterName = decodedResponse.AdapterName
-            this.adapterState.isScanActivate = decodedResponse.isScanActivate
-            this.adapterState.isAlive = decodedResponse.isAlive
+            // this.adapterState.AdapterName = decodedResponse.AdapterName
+            // this.adapterState.isScanActivate = decodedResponse.isScanActivate
+            // this.adapterState.isAlive = decodedResponse.isAlive
         } catch (error) {
             console.error('Failed to check adapter:', error)
             throw error
@@ -93,7 +89,8 @@ export class DeviceManager {
             adapterScanStop, ws = await adapterApi.scanAdapter(
                 encodedScanRequest,
                 (data) => {
-                    scanResponseHandle(data)
+                    const scanResponse = api.wireless.v1.AdapterScanResponse.decode(data)
+                    scanResponseHandle(scanResponse)
                 },
                 (error) => {
                     console.error('Scan error:', error)
