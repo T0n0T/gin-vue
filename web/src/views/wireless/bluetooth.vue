@@ -172,31 +172,10 @@ onMounted(() => {
  * @description 开始扫描蓝牙设备
  * @returns {void}
  */
-async function startScan() {
-    try {
-        const scanRequest = {
-            timeout: 30000, // 30秒超时
-            filter: {} // 可以添加过滤条件
-        }
+const startScan= () => {
+    deviceManager.adapterScan(true, ()=>{
 
-        await adapterApi.scanAdapter(
-            scanRequest,
-            (device) => {
-                // 处理扫描到的设备
-                if (!devices.value.some(d => d.address === device.address)) {
-                    devices.value.push(device)
-                }
-            },
-            (error) => {
-                console.error('Scan error:', error)
-                ElMessage.error('Failed to scan devices')
-            },
-            'ble'
-        )
-    } catch (error) {
-        console.error('Failed to start scan:', error)
-        ElMessage.error('Failed to start scan')
-    }
+    })
 }
 
 /**

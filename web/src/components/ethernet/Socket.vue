@@ -1,7 +1,8 @@
 <template><el-main style="padding: 0% 5% 0% 5%;">
     <el-form :model="configForm" label-width="100px" label-position="right">
         <el-form-item label="新增连接">
-            <GetIf v-model:ifaceName="configForm.interfaceName" @interfaceNeedConfig="interfaceDoConfigurate" />
+            <GetIf v-model:ifaceName="configForm.interfaceName" @scanInterface="scanInterface"
+            @interfaceNeedConfig="interfaceDoConfigurate" />
         </el-form-item>
         <el-form-item label="协议">
             <el-select v-model="configForm.selectedProtocol" placeholder="选择一种协议">
@@ -26,7 +27,6 @@ import { CloseBold, Select } from '@element-plus/icons-vue'
 import GetIf from '@/components/ethernet/GetIf.vue'
 
 const props = defineProps({
-    isEdit: Boolean,
     formData: {
         type: Object,
         default: () => ({
@@ -45,6 +45,10 @@ const emit = defineEmits([
     'socketDialogSubmit', 
     'socketDialogclose',
 ])
+
+const scanInterface = () => {
+    emit('scanInterface')
+}
 
 const interfaceDoConfigurate = (data) => {
     configForm.interfaceName = data

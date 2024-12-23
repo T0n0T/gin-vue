@@ -8,7 +8,7 @@
                     </div>
                 </template>
                 <KeepAlive :exclude="excludeComponents">
-                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow" :isEdit="isEdit"
+                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow"
                         @interfaceConfigurate="checkoutIfconfig" @socketDialogSubmit="saveConn"
                         @socketDialogclose="DialogClose" />
                     <Ifconfig v-else :ifaceName="selectedInterfaceName" @submit="ifconfigVisible = false"
@@ -40,11 +40,27 @@
 import { Plus, DeleteFilled } from '@element-plus/icons-vue';
 import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
-import { useEthernetStore } from '@/store/ethernet';
+import { v5 as uuidv5 } from 'uuid';
+import { DeviceManager } from '@/core/devMngr'
+import { netctl } from '@/proto/net'
+
 import Socket from '@/components/ethernet/Socket.vue';
 import Ifconfig from '@/components/ethernet/Ifconfig.vue';
 
-const ethernetStore = useEthernetStore();
+const deviceManager = new DeviceManager(
+    'net',
+    (deviceData) => {
+        const uuid = uuidv5(deviceData, '6ba7b810-9dad-11d1-80b4-00c04fd430c8');
+        const uuidBytes = uuid.replace(/-/g, '').substring(0, 8);
+        const uint32 = (parseInt(uuidBytes.substring(0, 2), 16) << 24) | 
+            (parseInt(uuidBytes.substring(2, 4), 16) << 16) |
+            (parseInt(uuidBytes.substring(4, 6), 16) << 8) |
+            parseInt(uuidBytes.substring(6, 8), 16); 
+
+        return uint32 >>> 0;     
+    },
+    (connectData) => connectData.spec // 使用连接ID作为连接标识
+)
 
 const newConnDialogVisible = ref(false);
 const ifconfigVisible = ref(false);
@@ -56,7 +72,7 @@ const ethConnTable = ref(null);
 const searchQuery = ref('');
 
 const dialogTitle = computed(() => {
-    let connTitle = isEdit.value? '编辑连接':'新增连接';
+    let connTitle = isEdit.value ? '编辑连接' : '新增连接';
     return ifconfigVisible.value ? selectedInterfaceName.value : connTitle;
 });
 
@@ -107,9 +123,7 @@ const DialogClose = () => {
     }, 0);
 };
 
-const saveConn =(value) => {
-    console.log('isEdit:', isEdit);
-    console.log('value:', value);
+const saveConn = (value) => {
     if (isEdit.value) {
         // 编辑现有连接
         ethernetStore.updateConnection(editingRow.value, value);
@@ -129,7 +143,7 @@ const saveConn =(value) => {
 
 const editConn = (row) => {
     console.log('编辑连接:', row);
-    editingRow.value = row;
+    editingRow.value = Object.assign({}, row);
     isEdit.value = true;
     newConnDialogVisible.value = true;
     ifconfigVisible.value = false;

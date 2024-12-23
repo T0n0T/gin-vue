@@ -1,7 +1,7 @@
 <template>
 <div class="getif">
   <div class="select-and-buttons">
-    <el-select v-model="selectedInterfaceName" placeholder="请选择网卡" @change="interfaceChange" class="select-item">
+    <el-select v-model="selectedInterfaceName" placeholder="请选择网卡" class="select-item">
       <el-option v-for="item in interfaceNameList" :key="item.name" :label="item.name" :value="item.name">
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <span>
@@ -28,14 +28,14 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Setting, Refresh, Check, Close } from '@element-plus/icons-vue'
+import { adapterApi } from '@/api/adapter'
 
-const props = defineProps({ ifaceName: String })
-const interfaceNameList = ref([
-  { name: 'eth0', available: true },
-  { name: 'wlan0', available: false },
-  { name: 'usb0', available: true }
-]);
-const emit = defineEmits(['update:ifaceName', 'interfaceNeedConfig'])
+const props = defineProps({ 
+  ifaceName: String,
+  interfaceNameList: Array
+})
+
+const emit = defineEmits(['update:ifaceName', 'scanInterface', 'interfaceNeedConfig'])
 
 const selectedInterfaceName = computed({
   get: () => props.ifaceName,
@@ -43,11 +43,8 @@ const selectedInterfaceName = computed({
 })
 
 const interfaceFetch = async () => {
+  emit('scanInterface')
   ElMessage.info('获取网卡')
-}
-
-const interfaceChange = (value) => {
-  console.log('Selected interface:', value)
 }
 
 const interfaceConfigurate = () => {

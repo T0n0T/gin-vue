@@ -1,6 +1,7 @@
-import { deviceApi } from '../api/device'
-import { useDeviceStore } from '../store/device'
-import { api } from '../proto/wireless'
+import { deviceApi } from '@/api/device'
+import { adapterApi } from '@/api/adapter'
+import { useDeviceStore } from '@/store/device'
+import { api, google } from '@/proto/wireless'
 
 /**
  * 设备连接类
@@ -53,10 +54,70 @@ class Device {
  */
 export class DeviceManager {
     constructor(deviceType, deviceIdentify, connectIdentify) {
+        this.adapterState = {
+            isAlive: false,
+            isScanActivate: false,
+            AdapterName: '',
+        }
         this.deviceType = deviceType
         this.deviceIdentify = deviceIdentify
         this.connectIdentify = connectIdentify
         this.store = useDeviceStore()
+    }
+
+    async adapterCheck() {
+        try {
+            const encodedContext = google.protobuf.Empty.encode({}).finish();
+
+            // 调用API创建设备
+            const response = await adapterApi.checkAdapter(encodedContext, this.deviceType)
+            // 解码proto返回的数据
+            const decodedResponse = api.wireless.v1.AdapterCheckResponse.decode(response)
+            // 处理返回的连接状态列表
+            this.adapterState.AdapterName = decodedResponse.AdapterName
+            this.adapterState.isScanActivate = decodedResponse.isScanActivate
+            this.adapterState.isAlive = decodedResponse.isAlive
+        } catch (error) {
+            console.error('Failed to check adapter:', error)
+            throw error
+        }
+    }
+
+    async adapterScan(isScanActivate, scanResponseHandle, duration = 30000) {
+        try {
+            const encodedScanRequest = api.wireless.v1.AdapterScanRequest.encode({
+                isScanActivate: isScanActivate,
+                duration: duration,
+            }).finish();
+
+            adapterScanStop, ws = await adapterApi.scanAdapter(
+                encodedScanRequest,
+                (data) => {
+                    scanResponseHandle(data)
+                },
+                (error) => {
+                    console.error('Scan error:', error)
+                    ElMessage.error('Failed to scan devices')
+                },
+                this.deviceType
+            )
+        } catch (error) {
+            console.error('Failed to start scan:', error)
+            ElMessage.error('Failed to start scan')
+        }
+    }
+
+    async adapterConfiugure(data) {
+        try {
+            const encodedConfigRequest = api.wireless.v1.AdapterConfigureRequest.encode({
+                ctx: data,
+            }).finish();
+
+            await adapterApi.configureAdapter(encodedConfigRequest, this.deviceType)
+        } catch (error) {
+            console.error('Failed to start scan:', error)
+            ElMessage.error('Failed to start scan')
+        }
     }
 
     /**
@@ -103,7 +164,7 @@ export class DeviceManager {
                 devID: devID
             });
             const encodedContext = api.wireless.v1.DeviceID.encode(context).finish();
-    
+
             await deviceApi.destroyDevice(encodedContext, this.deviceType)
 
             // 从pinia中移除设备
@@ -126,7 +187,8 @@ export class DeviceManager {
     async deviceCheck() {
         try {
             // 调用API检查设备
-            const response = await deviceApi.checkDevice(this.deviceType)
+            const encodedContext = google.protobuf.Empty.encode({}).finish();
+            const response = await deviceApi.checkDevice(encodedContext, this.deviceType)
 
             // 解码proto返回的数据
             const decodedResponse = api.wireless.v1.DeviceCheckResponse.decode(response)

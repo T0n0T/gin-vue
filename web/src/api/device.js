@@ -11,8 +11,8 @@ export const deviceApi = {
    * @async
    * @returns {Promise<Object>} 返回设备状态信息，包含deviceId等
    */
-  checkDevice: (prefix = '') => {
-    return protoRequest(prefix, `DeviceCheck`, null)
+  checkDevice: (checkRequest, prefix = '') => {
+    return protoRequest(prefix, `DeviceCheck`, checkRequest)
   },
 
   /**
