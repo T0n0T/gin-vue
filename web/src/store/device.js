@@ -14,11 +14,22 @@ import { DeviceManager } from '../core/devMngr'
  */
 export const useDeviceStore = (deviceType) => defineStore(deviceType, () => {
     // 存储设备列表
+    console.log('useDeviceStore:', deviceType);
     const devices = ref(new Map())
 
+    const devicesMapInit = async(deviceType) => {
+        //从数据库中获取设备列表
+        // const devices = await db.get(deviceType)
+        // devices.forEach(device => {
+        //     devices.set(device.devID, device)
+        // })
+    }
+
     // 添加设备
-    const addDevice = (device) => {
+    const addDevice = async (device) => {
         devices.value.set(device.devID, device)
+        // 将设备添加到数据库
+        // await db.set(deviceType, device)
     }
 
     // 获取设备
@@ -27,8 +38,10 @@ export const useDeviceStore = (deviceType) => defineStore(deviceType, () => {
     }
 
     // 移除设备
-    const removeDevice = (devID) => {
+    const removeDevice = async (devID) => {
         devices.value.delete(devID)
+        // 将设备从数据库中移除
+        // await db.delete(deviceType, devID)
     }
 
     return {

@@ -3,8 +3,8 @@
     <el-form :model="configForm" label-width="100px" label-position="right">
       <el-form-item label="新增连接">
         <div class="select-and-buttons">
-          <el-select v-model="configForm.interfaceName" placeholder="请选择网卡" class="select-item">
-            <el-option v-for="item in interfaceNameList" :key="item.name" :label="item.name" :value="item.name">
+          <el-select v-model="configForm.devID" placeholder="请选择网卡" class="select-item">
+            <el-option v-for="item in ifaceList" :key="item.mac" :value="item.devID">
               <div style="display: flex; align-items: center; justify-content: space-between;">
                 <span>
                   {{ item.name }}
@@ -20,8 +20,8 @@
             </el-option>
           </el-select>
           <div class="button-container">
-            <el-button circle plain type="text" :icon="Refresh" @click="emit('interfaceScan')"></el-button>
-            <el-button circle plain type="text" :icon="Setting" @click.stop="emit('ifaceConfigure', configForm.value.interfaceName)"></el-button>
+            <el-button circle plain type="text" :icon="Refresh" @click="emit('ifaceFetch')"></el-button>
+            <el-button circle plain type="text" :icon="Setting" @click.stop="emit('ifaceConfigure', configForm.interfaceName)"></el-button>
           </div>
         </div>
       </el-form-item>
@@ -51,10 +51,11 @@ const props = defineProps({
   formData: {
     type: Object,
     default: () => ({
-      id: 0,
-      interfaceName: '',
+      devID: 0,
       selectedProtocol: '',
-      remoteAddr: ''
+      proxyUrl: '',
+      remoteAddr: '',
+      spec: ''
     })
   },
   ifaceList: Array
@@ -75,8 +76,10 @@ const saveEthConfig = () => {
       message: '配置已保存',
       type: 'success'
     });
-    emit('socketDialogSubmit', configForm.value)
-    closePanel()
+    
+    configForm.value.spec = uuidv5().toString();
+    emit('socketDialogSubmit', configForm.value);
+    closePanel();
   } else {
     console.log('error socket submit!!')
     return false

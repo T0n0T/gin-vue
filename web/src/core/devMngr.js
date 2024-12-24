@@ -87,22 +87,20 @@ export class DeviceManager {
             }).finish();
 
             let adapterScanStop = null
-            adapterScanStop, _ = await adapterApi.scanAdapter(
+            adapterScanStop = await adapterApi.scanAdapter(
                 encodedScanRequest,
                 (data) => {
                     const scanResponse = api.wireless.v1.AdapterScanResponse.decode(data)
                     scanResponseHandle(scanResponse)
                 },
                 (error) => {
-                    console.error('Scan error:', error)
-                    ElMessage.error('Failed to scan devices')
+                    throw error
                 },
                 this.deviceType
             )
             return adapterScanStop
         } catch (error) {
-            console.error('Failed to start scan:', error)
-            ElMessage.error('Failed to start scan')
+            throw error
         }
     }
 
@@ -114,8 +112,7 @@ export class DeviceManager {
 
             await adapterApi.configureAdapter(encodedConfigRequest, this.deviceType)
         } catch (error) {
-            console.error('Failed to start scan:', error)
-            ElMessage.error('Failed to start scan')
+            throw error
         }
     }
 

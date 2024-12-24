@@ -9,7 +9,6 @@ import { faBluetooth } from '@fortawesome/free-brands-svg-icons'
 import { faWifi, faSignal, faPlug } from '@fortawesome/free-solid-svg-icons'
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { createPinia } from 'pinia'
-import 'virtual:svg-icons-register'
 
 library.add(faBluetooth, faWifi, faSignal, faPlug)
 createApp(App)

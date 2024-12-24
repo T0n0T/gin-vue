@@ -9,7 +9,7 @@
                 </template>
                 <KeepAlive :exclude="keepAliveExclude">
                     <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow"
-                        :ifaceList="ifacesList" @ifaceConfigure="checkoutIfconfig" @ifaceFetch="ifacesFetch"
+                        :ifaceList="ifaceList" @ifaceConfigure="checkoutIfconfig" @ifaceFetch="ifacesFetch"
                         @socketDialogSubmit="saveConn" @socketDialogclose="DialogClose" />
                     <Ifconfig v-else :iface="selectedIface" @ifconfigSubmit="ifaceConfigure"
                         @ifconfigClose="ifconfigVisible = false" />
@@ -39,12 +39,11 @@
 
 <script setup>
 import { Plus, DeleteFilled } from '@element-plus/icons-vue';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { v5 as uuidv5 } from 'uuid';
 import { DeviceManager } from '../core/devMngr'
 import { netctrl } from '../proto/net'
-import { api } from '../proto/wireless';
 import Socket from '../components/ethernet/Socket.vue';
 import Ifconfig from '../components/ethernet/Ifconfig.vue';
 
@@ -64,6 +63,10 @@ const deviceManager = new DeviceManager(
     (connectData) => connectData.spec // 使用连接ID作为连接标识
 )
 
+onMounted(() => {
+    console.log("init deviceManager");
+});
+
 // 可视化
 const newConnDialogVisible = ref(false);
 const ifconfigVisible = ref(false);
@@ -71,7 +74,11 @@ const ifconfigVisible = ref(false);
 // 网卡选择
 const ifacesMap = ref(new Map())
 const ifaceList = ref([]);
-const selectedIfaceName = ref('');
+const selectedIface = ref({
+    name: '',
+    mac: '',
+    status: false
+});
 
 // 对话框内容
 const isEdit = ref(false);
@@ -79,16 +86,16 @@ const editingRow = ref({});
 const keepAliveExclude = ref([]);
 const dialogTitle = computed(() => {
     let connTitle = isEdit.value ? '编辑连接' : '新增连接';
-    return ifconfigVisible.value ? selectedIfaceName.value : connTitle;
+    return ifconfigVisible.value ? selectedIface.value.name : connTitle;
 });
 
 // 连接表格
 const ethConnTable = ref(null);
 const searchQuery = ref('');
 const filteredConnections = computed(() => {
+    console.log(typeof deviceManager.store.devices);
     const devices = deviceManager.store.devices;
     if (!(devices instanceof Map)) {
-        console.error('devices is not a Map:', devices);
         return [];
     }
     const connections = []; // 用于存储最终的连接信息
@@ -101,7 +108,7 @@ const filteredConnections = computed(() => {
             const interfaceName = iface.name; // 获取接口名称
 
             // 遍历 device 的 connectMap
-            for (const [_, connData] of Object.entries(device.connectMap)) {
+            for (const [connID, connData] of Object.entries(device.connectMap)) {
                 // connData 应该包含 url
                 const url = connData.url; // 假设 url 的形式是 scheme://ip:port
                 const [scheme, rest] = url.split('://'); // 解析 scheme
@@ -109,6 +116,8 @@ const filteredConnections = computed(() => {
 
                 // 构建连接对象
                 connections.push({
+                    devID: device.devID,
+                    connID: connID,
                     interfaceName: interfaceName,
                     selectedProtocol: scheme, // 使用 scheme 作为 selectedProtocol
                     remoteAddr: `${ip}:${port}` // 使用 ip:port 作为 remoteAddr
@@ -143,7 +152,11 @@ const ifacesFetch = () => {
                 name: deviceInfo.name,
             });
         }
-    }, 1000);
+    }, 1000).then(() => {
+        ElMessage.success('网卡扫描完成');
+    }).catch((error) => {
+        ElMessage.error('网卡扫描失败', error);
+    });
 };
 
 watch(ifacesMap, (newIfacesMap) => {
@@ -154,6 +167,7 @@ watch(ifacesMap, (newIfacesMap) => {
             device = deviceManager.store.devices.get(mac);
         }
         newIfaceList.push({
+            devID: device ? device.devID : 0,
             mac: mac,
             name: iface.name,
             status: device ? device.status : false
@@ -162,21 +176,24 @@ watch(ifacesMap, (newIfacesMap) => {
     ifaceList.value = newIfaceList;
 }, { deep: true });
 
-const ifaceConfigure = (config) => {
+const ifaceConfigure = async (config) => {
     ifconfigVisible.value = false;
-    netctrl.DeviceSpec.encode({
-        mac: selectedIfaceName.mac,
+    const DeviceSpec = netctrl.DeviceSpec.encode({
         name: config.name,
+        mac: config.mac,
+        config: {
+            dhcp: config.dhcp,
+            ip: config.ip,
+            subnetMask: config.subnetMask,
+            gateway: config.gateway,
+            dns: config.dns
+        }
     }).finish();
-    deviceManager.deviceCreate()
-};
-
-const clearConns = () => {
-    ethernetStore.connections = [];
-    ElMessage({
-        message: '连接清除成功',
-        type: 'success'
-    });
+    await deviceManager.deviceCreate(DeviceSpec).then(() => {
+        ElMessage.success('设备创建成功')
+    }).catch((error) => {
+        ElMessage.error('设备创建失败', error)
+    })
 };
 
 const checkoutIfconfig = (ifaceName) => {
@@ -189,7 +206,7 @@ const checkoutIfconfig = (ifaceName) => {
     }
 
     console.log('checkout to configureIf page', ifaceName);
-    selectedIfaceName.value = ifaceName;
+    selectedIface.value = ifaceList.value.find(iface => iface.name === ifaceName);
     ifconfigVisible.value = true;
 };
 
@@ -204,13 +221,17 @@ const DialogClose = () => {
 
 const saveConn = (value) => {
     if (isEdit.value) {
-        // 编辑现有连接
-        // ethernetStore.updateConnection(editingRow.value, value);
+        // 编辑现有连接,使用consul
         console.log('编辑连接:', editingRow.value);
     } else {
         // 新增连接
+        const connData = netctrl.ConnectData.encode({
+            url: `${value.selectedProtocol}://${value.remoteAddr}`,
+            proxyUrl: '',
+            spec: value.spec
+        }).finish();
+        deviceManager.deviceConnectCreate(value.devID, connData);
         console.log('新增连接:', value);
-        // ethernetStore.addConnection(value);
     }
 
     // 重置编辑状态并关闭对话框
@@ -232,8 +253,22 @@ const editConn = (row) => {
 const deleteConn = (row) => {
     // 删除连接逻辑
     console.log('删除连接:', row);
-    // ethernetStore.removeConnection(row);
+    deviceManager.deviceConnectDestroy(row.devID, row.connID);
     ElMessage.success('连接删除成功')
+};
+
+
+const clearConns = () => {
+    deviceManager.store.devices.forEach((device) => {
+        device.connectMap.forEach((conn) => {
+            deviceManager.deviceConnectDestroy(device.devID, conn.connID);            
+        });
+        
+    });
+    ElMessage({
+        message: '所有连接已清除',
+        type: 'success'
+    });
 };
 
 const handleSearch = () => {
