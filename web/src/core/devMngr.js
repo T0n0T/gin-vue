@@ -86,7 +86,8 @@ export class DeviceManager {
                 duration: duration,
             }).finish();
 
-            adapterScanStop, ws = await adapterApi.scanAdapter(
+            let adapterScanStop = null
+            adapterScanStop, _ = await adapterApi.scanAdapter(
                 encodedScanRequest,
                 (data) => {
                     const scanResponse = api.wireless.v1.AdapterScanResponse.decode(data)
@@ -98,6 +99,7 @@ export class DeviceManager {
                 },
                 this.deviceType
             )
+            return adapterScanStop
         } catch (error) {
             console.error('Failed to start scan:', error)
             ElMessage.error('Failed to start scan')
@@ -184,13 +186,13 @@ export class DeviceManager {
     async deviceCheck() {
         try {
             // 调用API检查设备
-            const encodedContext = google.protobuf.Empty.encode({}).finish();
+            const encodedContext = google.protobuf.Empty.encode({}).finish()
             const response = await deviceApi.checkDevice(encodedContext, this.deviceType)
 
             // 解码proto返回的数据
             const decodedResponse = api.wireless.v1.DeviceCheckResponse.decode(response)
             // 处理返回的连接状态列表
-            const deviceStatusList = decodedResponse.deviceStatusList || {}
+            const deviceStatusList = decodedResponse.deviceStatusList || {};
 
             for (const [devID, deviceHandle] of Object.entries(deviceStatusList)) {
                 const device = this.store.getDevice(parseInt(devID))

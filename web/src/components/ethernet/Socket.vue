@@ -57,7 +57,7 @@ const props = defineProps({
       remoteAddr: ''
     })
   },
-  interfaceNameList: Array
+  ifaceList: Array
 })
 
 const emit = defineEmits([

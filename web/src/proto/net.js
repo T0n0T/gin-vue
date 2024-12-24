@@ -16,6 +16,233 @@ export const netctrl = $root.netctrl = (() => {
      */
     const netctrl = {};
 
+    netctrl.DeviceInfo = (function() {
+
+        /**
+         * Properties of a DeviceInfo.
+         * @memberof netctrl
+         * @interface IDeviceInfo
+         * @property {string|null} [name] DeviceInfo name
+         * @property {string|null} [mac] DeviceInfo mac
+         */
+
+        /**
+         * Constructs a new DeviceInfo.
+         * @memberof netctrl
+         * @classdesc Represents a DeviceInfo.
+         * @implements IDeviceInfo
+         * @constructor
+         * @param {netctrl.IDeviceInfo=} [properties] Properties to set
+         */
+        function DeviceInfo(properties) {
+            if (properties)
+                for (let keys = Object.keys(properties), i = 0; i < keys.length; ++i)
+                    if (properties[keys[i]] != null)
+                        this[keys[i]] = properties[keys[i]];
+        }
+
+        /**
+         * DeviceInfo name.
+         * @member {string} name
+         * @memberof netctrl.DeviceInfo
+         * @instance
+         */
+        DeviceInfo.prototype.name = "";
+
+        /**
+         * DeviceInfo mac.
+         * @member {string} mac
+         * @memberof netctrl.DeviceInfo
+         * @instance
+         */
+        DeviceInfo.prototype.mac = "";
+
+        /**
+         * Creates a new DeviceInfo instance using the specified properties.
+         * @function create
+         * @memberof netctrl.DeviceInfo
+         * @static
+         * @param {netctrl.IDeviceInfo=} [properties] Properties to set
+         * @returns {netctrl.DeviceInfo} DeviceInfo instance
+         */
+        DeviceInfo.create = function create(properties) {
+            return new DeviceInfo(properties);
+        };
+
+        /**
+         * Encodes the specified DeviceInfo message. Does not implicitly {@link netctrl.DeviceInfo.verify|verify} messages.
+         * @function encode
+         * @memberof netctrl.DeviceInfo
+         * @static
+         * @param {netctrl.IDeviceInfo} message DeviceInfo message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        DeviceInfo.encode = function encode(message, writer) {
+            if (!writer)
+                writer = $Writer.create();
+            if (message.name != null && Object.hasOwnProperty.call(message, "name"))
+                writer.uint32(/* id 1, wireType 2 =*/10).string(message.name);
+            if (message.mac != null && Object.hasOwnProperty.call(message, "mac"))
+                writer.uint32(/* id 2, wireType 2 =*/18).string(message.mac);
+            return writer;
+        };
+
+        /**
+         * Encodes the specified DeviceInfo message, length delimited. Does not implicitly {@link netctrl.DeviceInfo.verify|verify} messages.
+         * @function encodeDelimited
+         * @memberof netctrl.DeviceInfo
+         * @static
+         * @param {netctrl.IDeviceInfo} message DeviceInfo message or plain object to encode
+         * @param {$protobuf.Writer} [writer] Writer to encode to
+         * @returns {$protobuf.Writer} Writer
+         */
+        DeviceInfo.encodeDelimited = function encodeDelimited(message, writer) {
+            return this.encode(message, writer).ldelim();
+        };
+
+        /**
+         * Decodes a DeviceInfo message from the specified reader or buffer.
+         * @function decode
+         * @memberof netctrl.DeviceInfo
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @param {number} [length] Message length if known beforehand
+         * @returns {netctrl.DeviceInfo} DeviceInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        DeviceInfo.decode = function decode(reader, length) {
+            if (!(reader instanceof $Reader))
+                reader = $Reader.create(reader);
+            let end = length === undefined ? reader.len : reader.pos + length, message = new $root.netctrl.DeviceInfo();
+            while (reader.pos < end) {
+                let tag = reader.uint32();
+                switch (tag >>> 3) {
+                case 1: {
+                        message.name = reader.string();
+                        break;
+                    }
+                case 2: {
+                        message.mac = reader.string();
+                        break;
+                    }
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+                }
+            }
+            return message;
+        };
+
+        /**
+         * Decodes a DeviceInfo message from the specified reader or buffer, length delimited.
+         * @function decodeDelimited
+         * @memberof netctrl.DeviceInfo
+         * @static
+         * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+         * @returns {netctrl.DeviceInfo} DeviceInfo
+         * @throws {Error} If the payload is not a reader or valid buffer
+         * @throws {$protobuf.util.ProtocolError} If required fields are missing
+         */
+        DeviceInfo.decodeDelimited = function decodeDelimited(reader) {
+            if (!(reader instanceof $Reader))
+                reader = new $Reader(reader);
+            return this.decode(reader, reader.uint32());
+        };
+
+        /**
+         * Verifies a DeviceInfo message.
+         * @function verify
+         * @memberof netctrl.DeviceInfo
+         * @static
+         * @param {Object.<string,*>} message Plain object to verify
+         * @returns {string|null} `null` if valid, otherwise the reason why it is not
+         */
+        DeviceInfo.verify = function verify(message) {
+            if (typeof message !== "object" || message === null)
+                return "object expected";
+            if (message.name != null && message.hasOwnProperty("name"))
+                if (!$util.isString(message.name))
+                    return "name: string expected";
+            if (message.mac != null && message.hasOwnProperty("mac"))
+                if (!$util.isString(message.mac))
+                    return "mac: string expected";
+            return null;
+        };
+
+        /**
+         * Creates a DeviceInfo message from a plain object. Also converts values to their respective internal types.
+         * @function fromObject
+         * @memberof netctrl.DeviceInfo
+         * @static
+         * @param {Object.<string,*>} object Plain object
+         * @returns {netctrl.DeviceInfo} DeviceInfo
+         */
+        DeviceInfo.fromObject = function fromObject(object) {
+            if (object instanceof $root.netctrl.DeviceInfo)
+                return object;
+            let message = new $root.netctrl.DeviceInfo();
+            if (object.name != null)
+                message.name = String(object.name);
+            if (object.mac != null)
+                message.mac = String(object.mac);
+            return message;
+        };
+
+        /**
+         * Creates a plain object from a DeviceInfo message. Also converts values to other types if specified.
+         * @function toObject
+         * @memberof netctrl.DeviceInfo
+         * @static
+         * @param {netctrl.DeviceInfo} message DeviceInfo
+         * @param {$protobuf.IConversionOptions} [options] Conversion options
+         * @returns {Object.<string,*>} Plain object
+         */
+        DeviceInfo.toObject = function toObject(message, options) {
+            if (!options)
+                options = {};
+            let object = {};
+            if (options.defaults) {
+                object.name = "";
+                object.mac = "";
+            }
+            if (message.name != null && message.hasOwnProperty("name"))
+                object.name = message.name;
+            if (message.mac != null && message.hasOwnProperty("mac"))
+                object.mac = message.mac;
+            return object;
+        };
+
+        /**
+         * Converts this DeviceInfo to JSON.
+         * @function toJSON
+         * @memberof netctrl.DeviceInfo
+         * @instance
+         * @returns {Object.<string,*>} JSON object
+         */
+        DeviceInfo.prototype.toJSON = function toJSON() {
+            return this.constructor.toObject(this, $protobuf.util.toJSONOptions);
+        };
+
+        /**
+         * Gets the default type url for DeviceInfo
+         * @function getTypeUrl
+         * @memberof netctrl.DeviceInfo
+         * @static
+         * @param {string} [typeUrlPrefix] your custom typeUrlPrefix(default "type.googleapis.com")
+         * @returns {string} The default type url
+         */
+        DeviceInfo.getTypeUrl = function getTypeUrl(typeUrlPrefix) {
+            if (typeUrlPrefix === undefined) {
+                typeUrlPrefix = "type.googleapis.com";
+            }
+            return typeUrlPrefix + "/netctrl.DeviceInfo";
+        };
+
+        return DeviceInfo;
+    })();
+
     netctrl.DeviceSpec = (function() {
 
         /**
@@ -281,6 +508,7 @@ export const netctrl = $root.netctrl = (() => {
          * @property {string|null} [gateway] NetworkConfig gateway
          * @property {string|null} [mask] NetworkConfig mask
          * @property {string|null} [ipAddress] NetworkConfig ipAddress
+         * @property {string|null} [dns] NetworkConfig dns
          */
 
         /**
@@ -331,6 +559,14 @@ export const netctrl = $root.netctrl = (() => {
         NetworkConfig.prototype.ipAddress = "";
 
         /**
+         * NetworkConfig dns.
+         * @member {string} dns
+         * @memberof netctrl.NetworkConfig
+         * @instance
+         */
+        NetworkConfig.prototype.dns = "";
+
+        /**
          * Creates a new NetworkConfig instance using the specified properties.
          * @function create
          * @memberof netctrl.NetworkConfig
@@ -362,6 +598,8 @@ export const netctrl = $root.netctrl = (() => {
                 writer.uint32(/* id 3, wireType 2 =*/26).string(message.mask);
             if (message.ipAddress != null && Object.hasOwnProperty.call(message, "ipAddress"))
                 writer.uint32(/* id 4, wireType 2 =*/34).string(message.ipAddress);
+            if (message.dns != null && Object.hasOwnProperty.call(message, "dns"))
+                writer.uint32(/* id 5, wireType 2 =*/42).string(message.dns);
             return writer;
         };
 
@@ -412,6 +650,10 @@ export const netctrl = $root.netctrl = (() => {
                         message.ipAddress = reader.string();
                         break;
                     }
+                case 5: {
+                        message.dns = reader.string();
+                        break;
+                    }
                 default:
                     reader.skipType(tag & 7);
                     break;
@@ -459,6 +701,9 @@ export const netctrl = $root.netctrl = (() => {
             if (message.ipAddress != null && message.hasOwnProperty("ipAddress"))
                 if (!$util.isString(message.ipAddress))
                     return "ipAddress: string expected";
+            if (message.dns != null && message.hasOwnProperty("dns"))
+                if (!$util.isString(message.dns))
+                    return "dns: string expected";
             return null;
         };
 
@@ -482,6 +727,8 @@ export const netctrl = $root.netctrl = (() => {
                 message.mask = String(object.mask);
             if (object.ipAddress != null)
                 message.ipAddress = String(object.ipAddress);
+            if (object.dns != null)
+                message.dns = String(object.dns);
             return message;
         };
 
@@ -503,6 +750,7 @@ export const netctrl = $root.netctrl = (() => {
                 object.gateway = "";
                 object.mask = "";
                 object.ipAddress = "";
+                object.dns = "";
             }
             if (message.useDhcp != null && message.hasOwnProperty("useDhcp"))
                 object.useDhcp = message.useDhcp;
@@ -512,6 +760,8 @@ export const netctrl = $root.netctrl = (() => {
                 object.mask = message.mask;
             if (message.ipAddress != null && message.hasOwnProperty("ipAddress"))
                 object.ipAddress = message.ipAddress;
+            if (message.dns != null && message.hasOwnProperty("dns"))
+                object.dns = message.dns;
             return object;
         };
 

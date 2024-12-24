@@ -4,6 +4,11 @@ package netctrl;
 
 option go_package = "microgw/api/proto/net";
 
+message DeviceInfo {
+  string name = 1;        // 网卡名称
+  string mac = 2;         // MAC地址
+}
+
 // 网卡设备配置消息
 message DeviceSpec {
   string name = 1;        // 网卡名称
@@ -17,6 +22,7 @@ message NetworkConfig {
   string gateway = 2;     // 网关地址
   string mask = 3;        // 子网掩码
   string ip_address = 4;  // IP地址
+  string dns = 5;         // dns
 }
 
 // 设备句柄

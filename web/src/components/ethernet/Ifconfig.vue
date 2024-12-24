@@ -33,16 +33,25 @@ import { ElMessage } from 'element-plus'
 import { CloseBold, Select } from '@element-plus/icons-vue'
 
 const props = defineProps({
-    ifaceName: String
+    iface: {
+        type: Object,
+        default: () => ({
+            name: '',
+            mac: '',
+        })
+    },
+    configForm: {
+        type: Object,
+        default: () => ({
+            dhcp: false,
+            ip: '',
+            subnetMask: '',
+            gateway: '',
+            dns: ''
+        })
+    }
 });
 
-const configForm = ref({
-    dhcp: false,
-    ip: '',
-    subnetMask: '',
-    gateway: '',
-    dns: ''
-});
 const rules = ref({
     ip: [
         { required: true, message: '请输入IP地址', trigger: 'blur' },
@@ -91,15 +100,15 @@ const resetForm = () => {
 const emit = defineEmits(['ifconfigSubmit', 'ifconfigClose'])
 
 const ifconfigSubmit = () => {
-    if (configForm) {
-        configForm.value.ifaceName = props.ifaceName; // 添加ifaceName成员
-        console.log('Updated form with ifaceName:', configForm.value); // 打印表单
+    if (props.configForm) {
+        configForm.value.name = props.iface.name;
+        configForm.value.mac = props.iface.mac;
         ElMessage({
             message: '配置已保存',
             type: 'success'
         });
-        resetForm()
-        emit('ifconfigSubmit')
+        emit('ifconfigSubmit', configForm.value);
+        resetForm();
     } else {
         console.log('error ifconfig submit!!')
         return false
@@ -111,7 +120,7 @@ const ifconfigClose = () => {
 }
 
 onMounted(() => {
-    console.log('mount ifconfig', props.ifaceName)
+    console.log('mount', props.iface.name, props.iface.mac)
 })
 </script>
 

@@ -8,10 +8,10 @@
                     </div>
                 </template>
                 <KeepAlive :exclude="keepAliveExclude">
-                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow" :interfaceNameList="ifacesList"
-                        @ifaceConfigure="checkoutIfconfig" @ifaceFetch="fetchIfaces" @socketDialogSubmit="saveConn"
-                        @socketDialogclose="DialogClose" />
-                    <Ifconfig v-else :ifaceName="selectedInterfaceName" @ifconfigSubmit="ifconfigVisible = false"
+                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow"
+                        :ifaceList="ifacesList" @ifaceConfigure="checkoutIfconfig" @ifaceFetch="ifacesFetch"
+                        @socketDialogSubmit="saveConn" @socketDialogclose="DialogClose" />
+                    <Ifconfig v-else :iface="selectedIface" @ifconfigSubmit="ifaceConfigure"
                         @ifconfigClose="ifconfigVisible = false" />
                 </KeepAlive>
             </el-dialog>
@@ -19,7 +19,8 @@
                 <el-input v-model="searchQuery" placeholder="搜索连接名称或协议" prefix-icon="Search" clearable
                     @input="handleSearch" style="width: 100%; margin-bottom: 15px;" />
             </div>
-            <el-table ref="ethConnTable" :data="filteredConnections" :border="true" style="width: 100%" highlight-current-row>
+            <el-table ref="ethConnTable" :data="filteredConnections" :border="true" style="width: 100%"
+                highlight-current-row>
                 <el-table-column prop="interfaceName" label="连接名称" />
                 <el-table-column prop="selectedProtocol" label="协议" />
                 <el-table-column prop="remoteAddr" label="远端URL" />
@@ -38,26 +39,27 @@
 
 <script setup>
 import { Plus, DeleteFilled } from '@element-plus/icons-vue';
-import { ref, computed } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { v5 as uuidv5 } from 'uuid';
 import { DeviceManager } from '../core/devMngr'
 import { netctrl } from '../proto/net'
-
+import { api } from '../proto/wireless';
 import Socket from '../components/ethernet/Socket.vue';
 import Ifconfig from '../components/ethernet/Ifconfig.vue';
+
 
 const deviceManager = new DeviceManager(
     'net',
     (deviceData) => {
         const uuid = uuidv5(deviceData, '6ba7b810-9dad-11d1-80b4-00c04fd430c8');
         const uuidBytes = uuid.replace(/-/g, '').substring(0, 8);
-        const uint32 = (parseInt(uuidBytes.substring(0, 2), 16) << 24) | 
+        const uint32 = (parseInt(uuidBytes.substring(0, 2), 16) << 24) |
             (parseInt(uuidBytes.substring(2, 4), 16) << 16) |
             (parseInt(uuidBytes.substring(4, 6), 16) << 8) |
-            parseInt(uuidBytes.substring(6, 8), 16); 
+            parseInt(uuidBytes.substring(6, 8), 16);
 
-        return uint32 >>> 0;     
+        return uint32 >>> 0;
     },
     (connectData) => connectData.spec // 使用连接ID作为连接标识
 )
@@ -66,6 +68,10 @@ const deviceManager = new DeviceManager(
 const newConnDialogVisible = ref(false);
 const ifconfigVisible = ref(false);
 
+// 网卡选择
+const ifacesMap = ref(new Map())
+const ifaceList = ref([]);
+const selectedIfaceName = ref('');
 
 // 对话框内容
 const isEdit = ref(false);
@@ -73,18 +79,18 @@ const editingRow = ref({});
 const keepAliveExclude = ref([]);
 const dialogTitle = computed(() => {
     let connTitle = isEdit.value ? '编辑连接' : '新增连接';
-    return ifconfigVisible.value ? selectedInterfaceName.value : connTitle;
+    return ifconfigVisible.value ? selectedIfaceName.value : connTitle;
 });
-
-// 网卡选择
-const ifacesMap = ref(new Map())
-const selectedInterfaceName = ref('');
 
 // 连接表格
 const ethConnTable = ref(null);
 const searchQuery = ref('');
 const filteredConnections = computed(() => {
     const devices = deviceManager.store.devices;
+    if (!(devices instanceof Map)) {
+        console.error('devices is not a Map:', devices);
+        return [];
+    }
     const connections = []; // 用于存储最终的连接信息
 
     // 遍历 devices
@@ -129,11 +135,40 @@ const openNewConnDialog = () => {
     ifconfigVisible.value = false;
 };
 
-const fetchIfaces = () => {
+const ifacesFetch = () => {
     deviceManager.adapterScan(true, (scanResponse) => {
-        console.log(scanResponse)
-        ifacesMap.set(scanResponse.ctx, scanResponse.ctx)
-    }, 3000);
+        const deviceInfo = netctrl.DeviceInfo.decode(scanResponse.ctx);
+        if (!ifacesMap.value.has(deviceInfo.mac)) {
+            ifacesMap.value.set(deviceInfo.mac, {
+                name: deviceInfo.name,
+            });
+        }
+    }, 1000);
+};
+
+watch(ifacesMap, (newIfacesMap) => {
+    const newIfaceList = [];
+    for (const [mac, iface] of newIfacesMap.entries()) {
+        let device = null;
+        if ((deviceManager.store.devices instanceof Map)) {
+            device = deviceManager.store.devices.get(mac);
+        }
+        newIfaceList.push({
+            mac: mac,
+            name: iface.name,
+            status: device ? device.status : false
+        });
+    }
+    ifaceList.value = newIfaceList;
+}, { deep: true });
+
+const ifaceConfigure = (config) => {
+    ifconfigVisible.value = false;
+    netctrl.DeviceSpec.encode({
+        mac: selectedIfaceName.mac,
+        name: config.name,
+    }).finish();
+    deviceManager.deviceCreate()
 };
 
 const clearConns = () => {
@@ -154,7 +189,7 @@ const checkoutIfconfig = (ifaceName) => {
     }
 
     console.log('checkout to configureIf page', ifaceName);
-    selectedInterfaceName.value = ifaceName;
+    selectedIfaceName.value = ifaceName;
     ifconfigVisible.value = true;
 };
 
