@@ -79,7 +79,7 @@ export class DeviceManager {
         }
     }
 
-    async adapterScan(isScanActivate, scanResponseHandle, duration = 30000) {
+    async adapterScan(isScanActivate, scanResponseHandle, duration = 0) {
         try {
             const encodedScanRequest = api.wireless.v1.AdapterScanRequest.encode({
                 isScanActivate: isScanActivate,
@@ -90,8 +90,31 @@ export class DeviceManager {
             adapterScanStop = await adapterApi.scanAdapter(
                 encodedScanRequest,
                 (data) => {
-                    const scanResponse = api.wireless.v1.AdapterScanResponse.decode(data)
-                    scanResponseHandle(scanResponse)
+                    try {
+                        // 确保 data 是一个有效的 Uint8Array
+                        if (!data || data.byteLength === 0) {
+                            console.error('Received empty data for decoding');
+                            return; // 直接返回，避免后续错误
+                        }
+
+                        const buffer = new Uint8Array(data);
+                        const scanResponse = api.wireless.v1.AdapterScanResponse.decode(buffer);
+
+                        // 检查 scanResponse 的结构
+                        if (scanResponse && typeof scanResponse === 'object') {
+                            if (scanResponse.ctx) {
+                                console.log('scanResponse is', scanResponse);
+                                // scanResponseHandle(scanResponse.ctx);
+                            } else {
+                                console.error('scanResponse does not contain ctx:', scanResponse);
+                            }
+                        } else {
+                            console.error('Decoded scanResponse is not an object:', scanResponse);
+                        }
+                    } catch (decodeError) {
+                        console.error('Decode error:', decodeError);
+                        throw decodeError;
+                    }
                 },
                 (error) => {
                     throw error
@@ -133,7 +156,7 @@ export class DeviceManager {
             // 调用API创建设备
             await deviceApi.createDevice(encodedContext, this.deviceType)
 
-            // 生成设备ID并创建设备实例
+            // 生成设备ID并建设备实例
             const devID = this.deviceIdentify(deviceData)
             const device = new Device(devID)
 

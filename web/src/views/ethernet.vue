@@ -144,19 +144,28 @@ const openNewConnDialog = () => {
     ifconfigVisible.value = false;
 };
 
-const ifacesFetch = () => {
-    deviceManager.adapterScan(true, (scanResponse) => {
-        const deviceInfo = netctrl.DeviceInfo.decode(scanResponse.ctx);
-        if (!ifacesMap.value.has(deviceInfo.mac)) {
-            ifacesMap.value.set(deviceInfo.mac, {
-                name: deviceInfo.name,
-            });
-        }
-    }, 1000).then(() => {
+const ifacesFetch = async () => {
+    try {
+        await deviceManager.adapterScan(true, (scanResponse) => {
+            try {
+                const deviceInfo = netctrl.DeviceInfo.decode(scanResponse.ctx);
+                if (!ifacesMap.value.has(deviceInfo.mac)) {
+                    ifacesMap.value.set(deviceInfo.mac, {
+                        name: deviceInfo.name,
+                    });
+                    console.log('scan device', deviceInfo.name, deviceInfo.mac);
+                }
+            } catch (decodeError) {
+                console.error('Failed to decode scan response:', decodeError);
+                ElMessage.error('解码扫描响应失败', decodeError);
+            }
+        }, 1000);
+        
         ElMessage.success('网卡扫描完成');
-    }).catch((error) => {
+    } catch (error) {
+        console.error('网卡扫描失败:', error);
         ElMessage.error('网卡扫描失败', error);
-    });
+    }
 };
 
 watch(ifacesMap, (newIfacesMap) => {
