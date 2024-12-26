@@ -59,6 +59,7 @@ export class DeviceManager {
         this.deviceIdentify = deviceIdentify
         this.connectIdentify = connectIdentify
         this.store = useDeviceStore(deviceType)
+        console.log('DeviceManager store:', this.store); // 添加调试信息
     }
 
     async adapterCheck() {

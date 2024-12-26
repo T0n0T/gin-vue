@@ -64,7 +64,7 @@ const deviceManager = new DeviceManager(
 )
 
 onMounted(() => {
-    console.log("init deviceManager");
+    console.log("init deviceManager", deviceManager);
 });
 
 // 可视化

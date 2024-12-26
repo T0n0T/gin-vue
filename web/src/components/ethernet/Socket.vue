@@ -21,7 +21,8 @@
           </el-select>
           <div class="button-container">
             <el-button circle plain type="text" :icon="Refresh" @click="emit('ifaceFetch')"></el-button>
-            <el-button circle plain type="text" :icon="Setting" @click.stop="emit('ifaceConfigure', configForm.interfaceName)"></el-button>
+            <el-button circle plain type="text" :icon="Setting"
+              @click.stop="emit('ifaceConfigure', configForm.interfaceName)"></el-button>
           </div>
         </div>
       </el-form-item>
@@ -46,6 +47,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { CloseBold, Select, Setting, Refresh, Check, Close } from '@element-plus/icons-vue'
+import { v4 as uuidv4 } from 'uuid';
 
 const props = defineProps({
   formData: {
@@ -71,18 +73,23 @@ const emit = defineEmits([
 const configForm = ref(props.formData)
 
 const saveEthConfig = () => {
-  if (configForm) {
-    ElMessage({
-      message: '配置已保存',
-      type: 'success'
-    });
-    
-    configForm.value.spec = uuidv5().toString();
-    emit('socketDialogSubmit', configForm.value);
-    closePanel();
-  } else {
-    console.log('error socket submit!!')
-    return false
+  try {
+    if (configForm) {
+      ElMessage({
+        message: '配置已保存',
+        type: 'success'
+      });
+
+      configForm.value.spec = uuidv4().toString();
+      emit('socketDialogSubmit', configForm.value);
+      closeEthConfig();
+    } else {
+      console.log('error socket submit!!');
+      return false;
+    }
+  } catch (error) {
+    console.error('保存配置时出错:', error);
+    ElMessage.error('保存配置失败，请重试。');
   }
 }
 
