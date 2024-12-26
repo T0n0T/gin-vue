@@ -1,10 +1,10 @@
 <template>
   <el-main style="padding: 0% 5% 0% 5%;">
     <el-form :model="configForm" label-width="100px" label-position="right">
-      <el-form-item label="新增连接">
+      <el-form-item label="网络接口">
         <div class="select-and-buttons">
           <el-select v-model="configForm.devID" placeholder="请选择网卡" class="select-item">
-            <el-option v-for="item in ifaceList" :key="item.mac" :value="item.devID">
+            <el-option v-for="item in ifaceList" :key="item.mac" :value="item.name">
               <div style="display: flex; align-items: center; justify-content: space-between;">
                 <span>
                   {{ item.name }}
