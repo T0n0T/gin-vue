@@ -90,30 +90,24 @@ export class DeviceManager {
             adapterScanStop = await adapterApi.scanAdapter(
                 encodedScanRequest,
                 (data) => {
-                    try {
-                        // 确保 data 是一个有效的 Uint8Array
-                        if (!data || data.byteLength === 0) {
-                            console.error('Received empty data for decoding');
-                            return; // 直接返回，避免后续错误
-                        }
+                    if (!data || data.byteLength === 0) {
+                        console.error('Received empty data for decoding');
+                        return; // 直接返回，避免后续错误
+                    }
 
-                        const buffer = new Uint8Array(data);
-                        const scanResponse = api.wireless.v1.AdapterScanResponse.decode(buffer);
+                    const buffer = new Uint8Array(data);
+                    const scanResponse = api.wireless.v1.AdapterScanResponse.decode(buffer);
 
-                        // 检查 scanResponse 的结构
-                        if (scanResponse && typeof scanResponse === 'object') {
-                            if (scanResponse.ctx) {
-                                console.log('scanResponse is', scanResponse);
-                                // scanResponseHandle(scanResponse.ctx);
-                            } else {
-                                console.error('scanResponse does not contain ctx:', scanResponse);
-                            }
+                    // 检查 scanResponse 的结构
+                    if (scanResponse && typeof scanResponse === 'object') {
+                        if (scanResponse.ctx) {
+                            console.log('scanResponse is', scanResponse.ctx);
+                            scanResponseHandle(scanResponse.ctx);
                         } else {
-                            console.error('Decoded scanResponse is not an object:', scanResponse);
+                            console.error('scanResponse does not contain ctx:', scanResponse);
                         }
-                    } catch (decodeError) {
-                        console.error('Decode error:', decodeError);
-                        throw decodeError;
+                    } else {
+                        console.error('Decoded scanResponse is not an object:', scanResponse);
                     }
                 },
                 (error) => {

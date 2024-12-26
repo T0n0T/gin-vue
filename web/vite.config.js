@@ -14,19 +14,7 @@ export default defineConfig({
     }
   },
   server: {
-    proxy: {
-      // 开发环境代理配置
-      '/api.wireless.v1': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-        // rewrite: (path) => path.replace(/^\/api/, '')
-      },
-      // WebSocket代理配置
-      '/ws': {
-        target: 'ws://localhost:8080',
-        ws: true,
-        changeOrigin: true
-      }
-    }
+    host: true,
+    listen: '0.0.0.0',
   }
 })

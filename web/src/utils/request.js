@@ -51,7 +51,7 @@ export const wsProtoRequest = (prefix, url, data = null, onMessage, onError) => 
   const fullUrl = `${prefix}stream/${API_CONFIG.API_VERSION_PATH}/${url}`
   const wsUrl = `${API_CONFIG.WS_PREFIX}/${fullUrl}`
   const ws = new WebSocket(wsUrl)
-  
+  ws.binaryType = 'arraybuffer' 
   ws.onopen = () => {
     if (data) {
       ws.send(data)

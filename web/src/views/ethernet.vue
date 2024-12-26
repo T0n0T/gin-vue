@@ -146,9 +146,9 @@ const openNewConnDialog = () => {
 
 const ifacesFetch = async () => {
     try {
-        await deviceManager.adapterScan(true, (scanResponse) => {
+        await deviceManager.adapterScan(true, (ctx) => {
             try {
-                const deviceInfo = netctrl.DeviceInfo.decode(scanResponse.ctx);
+                const deviceInfo = netctrl.DeviceInfo.decode(ctx);
                 if (!ifacesMap.value.has(deviceInfo.mac)) {
                     ifacesMap.value.set(deviceInfo.mac, {
                         name: deviceInfo.name,
