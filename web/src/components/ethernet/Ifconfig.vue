@@ -1,6 +1,6 @@
 <template>
     <el-main style="padding: 0% 5% 0% 5%;">
-        <el-form :model="configForm" :rules="rules" label-width="100px" label-position="right">
+        <el-form :model="props.configForm" :rules="rules" label-width="100px" label-position="right">
             <!-- DHCP开关 -->
             <el-form-item label="DHCP">
                 <el-switch v-model="configForm.dhcp" active-text="开" inactive-text="关"></el-switch>
@@ -40,7 +40,7 @@ const props = defineProps({
             mac: '',
         })
     },
-    configForm: {
+    configTemplate: {
         type: Object,
         default: () => ({
             dhcp: false,
@@ -51,6 +51,8 @@ const props = defineProps({
         })
     }
 });
+
+const configForm = ref({})
 
 const rules = ref({
     ip: [
@@ -87,28 +89,22 @@ const rules = ref({
     ]
 });
 
-const resetForm = () => {
-    configForm.value = {
-        dhcp: false,
-        ip: '',
-        subnetMask: '',
-        gateway: '',
-        dns: ''
-    };
-};
+onMounted(() => {
+    configForm.value = {...props.configTemplate}
+})
 
 const emit = defineEmits(['ifconfigSubmit', 'ifconfigClose'])
 
 const ifconfigSubmit = () => {
-    if (props.configForm) {
+    if (configForm.value) {
         configForm.value.name = props.iface.name;
         configForm.value.mac = props.iface.mac;
         ElMessage({
             message: '配置已保存',
             type: 'success'
         });
+        console.log('ifconfig submit', configForm.value);
         emit('ifconfigSubmit', configForm.value);
-        resetForm();
     } else {
         console.log('error ifconfig submit!!')
         return false
@@ -119,9 +115,6 @@ const ifconfigClose = () => {
     emit('ifconfigClose')
 }
 
-onMounted(() => {
-    console.log('mount', props.iface.name, props.iface.mac)
-})
 </script>
 
 <style scoped></style>

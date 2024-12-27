@@ -9,9 +9,9 @@
                 </template>
                 <KeepAlive :exclude="keepAliveExclude">
                     <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow"
-                        :ifaceList="ifaceList" @ifaceConfigure="checkoutIfconfig" @ifaceFetch="ifacesFetch"
+                        :ifaceList="ifaceList" @ifaceConfigure="ifconfigCheckout" @ifaceFetch="ifacesFetch"
                         @socketDialogSubmit="saveConn" @socketDialogclose="DialogClose" />
-                    <Ifconfig v-else :iface="selectedIface" @ifconfigSubmit="ifaceConfigure"
+                    <Ifconfig v-else :iface="selectedIface" @ifconfigSubmit="ifaceLinkUp"
                         @ifconfigClose="ifconfigVisible = false" />
                 </KeepAlive>
             </el-dialog>
@@ -185,8 +185,19 @@ watch(ifacesMap, (newIfacesMap) => {
     ifaceList.value = newIfaceList;
 }, { deep: true });
 
-const ifaceConfigure = async (config) => {
+const ifconfigCheckout = (iface) => {
+    if (!iface.name) {
+        ElMessage.warning('需要选择网卡');
+        return;
+    }
+    
+    selectedIface.value = iface;
+    ifconfigVisible.value = true;
+};
+
+const ifaceLinkUp = async (config) => {
     ifconfigVisible.value = false;
+    console.log(config);
     const DeviceSpec = netctrl.DeviceSpec.encode({
         name: config.name,
         mac: config.mac,
@@ -197,26 +208,13 @@ const ifaceConfigure = async (config) => {
             gateway: config.gateway,
             dns: config.dns
         }
-    }).finish();
-    await deviceManager.deviceCreate(DeviceSpec).then(() => {
+    }).finish();    
+    await deviceManager.deviceCreate(DeviceSpec).then((devID) => {
+        console.log('devID', devID);
         ElMessage.success('设备创建成功')
     }).catch((error) => {
         ElMessage.error('设备创建失败', error)
     })
-};
-
-const checkoutIfconfig = (ifaceName) => {
-    if (!ifaceName) {
-        ElMessage({
-            message: '需要选择网卡',
-            type: 'warning'
-        });
-        return;
-    }
-
-    console.log('checkout to configureIf page', ifaceName);
-    selectedIface.value = ifaceList.value.find(iface => iface.name === ifaceName);
-    ifconfigVisible.value = true;
 };
 
 const DialogClose = () => {

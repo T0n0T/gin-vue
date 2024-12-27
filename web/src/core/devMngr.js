@@ -156,7 +156,7 @@ export class DeviceManager {
             const device = new Device(devID)
 
             // 存储到pinia
-            this.store.addDevice(device)
+            // this.store.addDevice(device)
 
             return devID
         } catch (error) {

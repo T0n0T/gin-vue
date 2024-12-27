@@ -3,8 +3,8 @@
     <el-form :model="configForm" label-width="100px" label-position="right">
       <el-form-item label="网络接口">
         <div class="select-and-buttons">
-          <el-select v-model="configForm.devID" placeholder="请选择网卡" class="select-item">
-            <el-option v-for="item in ifaceList" :key="item.mac" :value="item.name">
+          <el-select v-model="ifaceSelect" placeholder="请选择网卡" class="select-item" value-key="mac">
+            <el-option v-for="item in ifaceList" :key="item.mac" :label="item.name" :value="item">
               <div style="display: flex; align-items: center; justify-content: space-between;">
                 <span>
                   {{ item.name }}
@@ -21,8 +21,7 @@
           </el-select>
           <div class="button-container">
             <el-button circle plain type="text" :icon="Refresh" @click="emit('ifaceFetch')"></el-button>
-            <el-button circle plain type="text" :icon="Setting"
-              @click.stop="emit('ifaceConfigure', configForm.interfaceName)"></el-button>
+            <el-button circle plain type="text" :icon="Setting" @click.stop="handleIfaceConfigure"></el-button>
           </div>
         </div>
       </el-form-item>
@@ -70,11 +69,17 @@ const emit = defineEmits([
   'socketDialogclose',
 ])
 
+const ifaceSelect = ref(null)
+
 const configForm = ref(props.formData)
+
+const handleIfaceConfigure = () => {
+  emit('ifaceConfigure', ifaceSelect.value);
+}
 
 const saveEthConfig = () => {
   try {
-    if (configForm) {
+    if (configForm.value) {
       ElMessage({
         message: '配置已保存',
         type: 'success'
@@ -84,8 +89,8 @@ const saveEthConfig = () => {
       emit('socketDialogSubmit', configForm.value);
       closeEthConfig();
     } else {
-      console.log('error socket submit!!');
-      return false;
+      console.error('Error: configForm is undefined or null');
+      ElMessage.error('保存配置失败，请重试。');
     }
   } catch (error) {
     console.error('保存配置时出错:', error);
@@ -94,12 +99,22 @@ const saveEthConfig = () => {
 }
 
 const closeEthConfig = () => {
-  emit('socketDialogclose');
+  try {
+    emit('socketDialogclose');
+  } catch (error) {
+    console.error('关闭配置时出错:', error);
+    ElMessage.error('关闭配置失败，请重试。');
+  }
 };
 
 onMounted(() => {
-  emit('ifaceFetch')
-  ElMessage.info('获取网卡')
+  try {
+    emit('ifaceFetch');
+    ElMessage.info('获取网卡');
+  } catch (error) {
+    console.error('获取网卡时出错:', error);
+    ElMessage.error('获取网卡失败，请重试。');
+  }
 })
 </script>
 

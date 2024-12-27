@@ -11,7 +11,9 @@ const request = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   headers: {
     'Content-Type': 'application/proto'
-  }
+  },
+  responseType: 'text',
+  exposedHeaders: ['grpc-status', 'grpc-message', 'grpc-status-details-bin']
 })
 
 /**
@@ -29,9 +31,12 @@ export const protoRequest = async (prefix, url, data = null, method = 'POST') =>
     const response = await request({
       url: fullUrl,
       method,
-      data: data,
+      data: new Uint8Array(data),
     })
-    return response.data
+    console.log('Proto request response:', response)
+    // Convert text response to ArrayBuffer for protobuf decoding
+    const encoder = new TextEncoder();
+    return encoder.encode(response.data).buffer
   } catch (error) {
     console.error('Proto request failed:', error)
     throw error
@@ -73,4 +78,4 @@ export const wsProtoRequest = (prefix, url, data = null, onMessage, onError) => 
   }
 }
 
-export default request 
+export default request
