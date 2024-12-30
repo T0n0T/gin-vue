@@ -10,8 +10,8 @@ import { api, google } from '../proto/wireless'
  * @property {boolean} status - 连接可用状态
  * @property {Object|null} connConfig - 连接配置信息
  */
-class Connect {
-    constructor(connID, connData=null, status = false) {
+export class Connect {
+    constructor(connID, connData = null, status = false) {
         this.connID = connID
         this.status = status // available状态
         this.connData = connData
@@ -24,8 +24,7 @@ class Connect {
  */
 export const DeviceStatus = {
     ACTIVE: 'active',
-    INACTIVE: 'inactive',
-    RETRYING: 'retrying'
+    INACTIVE: 'inactive',    
 }
 
 /**
@@ -36,7 +35,7 @@ export const DeviceStatus = {
  * @property {Object|null} deviceHandle - 设备句柄
  * @property {Map} connectMap - 存储设备连接的Map
  */
-class Device {
+export class Device {
     constructor(devID, status = DeviceStatus.INACTIVE, deviceHandle = null) {
         this.devID = devID
         this.status = status // active/inactive/retrying
@@ -58,8 +57,7 @@ export class DeviceManager {
         this.deviceType = deviceType
         this.deviceIdentify = deviceIdentify
         this.connectIdentify = connectIdentify
-        this.store = useDeviceStore(deviceType)
-        console.log('DeviceManager store:', this.store); // 添加调试信息
+        this.store = useDeviceStore(deviceType)()
     }
 
     async adapterCheck() {
@@ -75,7 +73,6 @@ export class DeviceManager {
             // this.adapterState.isScanActivate = decodedResponse.isScanActivate
             // this.adapterState.isAlive = decodedResponse.isAlive
         } catch (error) {
-            console.error('Failed to check adapter:', error)
             throw error
         }
     }
@@ -102,7 +99,6 @@ export class DeviceManager {
                     // 检查 scanResponse 的结构
                     if (scanResponse && typeof scanResponse === 'object') {
                         if (scanResponse.ctx) {
-                            console.log('scanResponse is', scanResponse.ctx);
                             scanResponseHandle(scanResponse.ctx);
                         } else {
                             console.error('scanResponse does not contain ctx:', scanResponse);
@@ -140,27 +136,20 @@ export class DeviceManager {
      * @throws {Error} 当设备创建失败时抛出错误
      * @returns {Promise<number>} 返回创建的设备ID
      */
-    async deviceCreate(deviceData) {
+    async deviceCreate(deviceData, deviceHandle) {
         try {
-            // 创建并序列化DeviceCreateContext
-            const context = api.wireless.v1.DeviceCreateContext.create({
+            const encodedContext = api.wireless.v1.DeviceCreateContext.encode({
                 deviceData: deviceData
-            });
-            const encodedContext = api.wireless.v1.DeviceCreateContext.encode(context).finish();
-
-            // 调用API创建设备
+            }).finish();
             await deviceApi.createDevice(encodedContext, this.deviceType)
-
-            // 生成设备ID并建设备实例
-            const devID = this.deviceIdentify(deviceData)
-            const device = new Device(devID)
-
-            // 存储到pinia
-            // this.store.addDevice(device)
-
+            const devID = this.deviceIdentify(deviceHandle)
+            this.store.addDevice(new Device(
+                devID,
+                DeviceStatus.INACTIVE,
+                deviceHandle,
+            ))
             return devID
         } catch (error) {
-            console.error('Failed to create device:', error)
             throw error
         }
     }
@@ -184,7 +173,6 @@ export class DeviceManager {
             // 从pinia中移除设备
             this.store.removeDevice(devID)
         } catch (error) {
-            console.error('Failed to destroy device:', error)
             throw error
         }
     }
@@ -203,15 +191,11 @@ export class DeviceManager {
             // 调用API检查设备
             const encodedContext = google.protobuf.Empty.encode({}).finish()
             const response = await deviceApi.checkDevice(encodedContext, this.deviceType)
-
-            // 解码proto返回的数据
             const decodedResponse = api.wireless.v1.DeviceCheckResponse.decode(response)
-            // 处理返回的连接状态列表
             const deviceStatusList = decodedResponse.deviceStatusList || {};
 
             for (const [devID, deviceHandle] of Object.entries(deviceStatusList)) {
                 const device = this.store.getDevice(parseInt(devID))
-
                 if (device) {
                     // 更新已存在设备的状态
                     device.status = DeviceStatus.ACTIVE
@@ -226,8 +210,12 @@ export class DeviceManager {
                     this.store.addDevice(newDevice)
                 }
             }
+            for (const device of this.store.devices) {
+                if (!deviceStatusList[device.devID]) {
+                    device.status = DeviceStatus.INACTIVE
+                }
+            }
         } catch (error) {
-            console.error('Failed to check devices:', error)
             throw error
         }
     }
@@ -239,20 +227,19 @@ export class DeviceManager {
      * @throws {Error} 当创建连接失败时抛出错误
      * @returns {Promise<number>} 返回创建的连接ID
      */
-    async deviceConnectCreate(devID, connectData) {
+    async deviceConnectCreate(devID, connectData, connSepc) {
         try {
             // 创建并序列化ConnectCreateContext  
-            const context = api.wireless.v1.ConnectCreateContext.create({
+            const encodedContext = api.wireless.v1.ConnectCreateContext.encode({
                 devID: devID,
                 connectData: connectData
-            });
-            const encodedContext = api.wireless.v1.ConnectCreateContext.encode(context).finish();
+            }).finish();
 
             // 调用API创建连接
             await deviceApi.createDeviceConnect(encodedContext, this.deviceType)
 
             // 生成连接ID并创建连接实例
-            const connID = this.connectIdentify(connectData)
+            const connID = this.connectIdentify(connSepc)
             const connect = new Connect(connID, false)
 
             // 将连接添加到设备的connectMap中
@@ -263,7 +250,6 @@ export class DeviceManager {
 
             return connID
         } catch (error) {
-            console.error('Failed to create device connection:', error)
             throw error
         }
     }
@@ -293,7 +279,6 @@ export class DeviceManager {
                 device.connectMap.delete(connID)
             }
         } catch (error) {
-            console.error('Failed to destroy device connection:', error)
             throw error
         }
     }
@@ -345,7 +330,6 @@ export class DeviceManager {
                 }
             }
         } catch (error) {
-            console.error('Failed to check device connections:', error)
             throw error
         }
     }

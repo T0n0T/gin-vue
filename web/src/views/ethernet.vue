@@ -8,9 +8,9 @@
                     </div>
                 </template>
                 <KeepAlive :exclude="keepAliveExclude">
-                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow"
-                        :ifaceList="ifaceList" @ifaceConfigure="ifconfigCheckout" @ifaceFetch="ifacesFetch"
-                        @socketDialogSubmit="saveConn" @socketDialogclose="DialogClose" />
+                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow" :ifaceMap="ifacesMap"
+                        @ifaceConfigure="ifconfigCheckout" @ifaceFetch="ifacesFetch" @socketDialogSubmit="saveConn"
+                        @socketDialogclose="DialogClose" />
                     <Ifconfig v-else :iface="selectedIface" @ifconfigSubmit="ifaceLinkUp"
                         @ifconfigClose="ifconfigVisible = false" />
                 </KeepAlive>
@@ -39,33 +39,38 @@
 
 <script setup>
 import { Plus, DeleteFilled } from '@element-plus/icons-vue';
-import { ref, watch, computed, onMounted } from 'vue';
+import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { v5 as uuidv5 } from 'uuid';
 import { DeviceManager } from '../core/devMngr'
 import { netctrl } from '../proto/net'
+
 import Socket from '../components/ethernet/Socket.vue';
 import Ifconfig from '../components/ethernet/Ifconfig.vue';
 
+let timer
 
 const deviceManager = new DeviceManager(
     'net',
-    (deviceData) => {
-        const uuid = uuidv5(deviceData, '6ba7b810-9dad-11d1-80b4-00c04fd430c8');
+    (deviceHandle) => {
+        const uuid = uuidv5(deviceHandle, '6ba7b811-9dad-11d1-80b4-00c04fd430c8');
         const uuidBytes = uuid.replace(/-/g, '').substring(0, 8);
         const uint32 = (parseInt(uuidBytes.substring(0, 2), 16) << 24) |
             (parseInt(uuidBytes.substring(2, 4), 16) << 16) |
             (parseInt(uuidBytes.substring(4, 6), 16) << 8) |
             parseInt(uuidBytes.substring(6, 8), 16);
-
         return uint32 >>> 0;
     },
-    (connectData) => connectData.spec // 使用连接ID作为连接标识
+    (connectSpec) => {
+        const uuid = uuidv5(connectSpec, '6ba7b811-9dad-11d1-80b4-00c04fd430c8');
+        const uuidBytes = uuid.replace(/-/g, '').substring(0, 8);
+        const uint32 = (parseInt(uuidBytes.substring(0, 2), 16) << 24) |
+            (parseInt(uuidBytes.substring(2, 4), 16) << 16) |
+            (parseInt(uuidBytes.substring(4, 6), 16) << 8) |
+            parseInt(uuidBytes.substring(6, 8), 16);
+        return uint32 >>> 0;
+    }
 )
-
-onMounted(() => {
-    console.log("init deviceManager", deviceManager);
-});
 
 // 可视化
 const newConnDialogVisible = ref(false);
@@ -73,7 +78,6 @@ const ifconfigVisible = ref(false);
 
 // 网卡选择
 const ifacesMap = ref(new Map())
-const ifaceList = ref([]);
 const selectedIface = ref({
     name: '',
     mac: '',
@@ -93,7 +97,6 @@ const dialogTitle = computed(() => {
 const ethConnTable = ref(null);
 const searchQuery = ref('');
 const filteredConnections = computed(() => {
-    console.log(typeof deviceManager.store.devices);
     const devices = deviceManager.store.devices;
     if (!(devices instanceof Map)) {
         return [];
@@ -139,6 +142,50 @@ const filteredConnections = computed(() => {
     );
 });
 
+
+onMounted(() => {
+    console.log("init deviceManager", deviceManager);
+
+    // 启动定时器，每5秒检查一次设备状态
+    timer = setInterval(async () => {
+        try {
+            await deviceManager.deviceCheck();
+        } catch (error) {
+            console.error('Failed to check devices:', error);
+        }
+    }, 5000);
+});
+
+onUnmounted(() => {
+    clearInterval(timer);
+});
+
+// 监听 deviceManager.store.devices 的变化
+watch(
+    () => deviceManager.store.devices,
+    () => {
+        for (const [mac, iface] of ifacesMap.value.entries()) {
+            // 创建 deviceHandle
+            const devHandle = netctrl.DeviceHandle.encode({
+                mac: mac,
+            }).finish();
+
+            // 获取设备状态
+            const devID = deviceManager.deviceIdentify(devHandle);
+            const device = deviceManager.store.getDevice(devID);
+            if (device) {
+                ifacesMap.value.set(mac, {
+                    ...iface,
+                    devID: devID,
+                    status: device.status
+                });
+            }
+        }
+    },
+    { deep: true, immediate: true }
+);
+
+
 const openNewConnDialog = () => {
     newConnDialogVisible.value = true;
     ifconfigVisible.value = false;
@@ -146,21 +193,27 @@ const openNewConnDialog = () => {
 
 const ifacesFetch = async () => {
     try {
-        await deviceManager.adapterScan(true, (ctx) => {
-            try {
-                const deviceInfo = netctrl.DeviceInfo.decode(ctx);
-                if (!ifacesMap.value.has(deviceInfo.mac)) {
-                    ifacesMap.value.set(deviceInfo.mac, {
-                        name: deviceInfo.name,
-                    });
-                    console.log('scan device', deviceInfo.name, deviceInfo.mac);
+        await deviceManager.adapterScan(
+            true,
+            async (ctx) => {
+                try {
+                    const deviceInfo = netctrl.DeviceInfo.decode(ctx);
+                    if (!ifacesMap.value.has(deviceInfo.mac)) {
+                        ifacesMap.value.set(deviceInfo.mac, {
+                            name: deviceInfo.name,
+                            mac: deviceInfo.mac,
+                            devID: 0,
+                            status: 'inactive',
+                        });
+                    }
+                } catch (decodeError) {
+                    console.error('Failed to decode scan response:', decodeError);
+                    ElMessage.error('解码扫描响应失败', decodeError);
                 }
-            } catch (decodeError) {
-                console.error('Failed to decode scan response:', decodeError);
-                ElMessage.error('解码扫描响应失败', decodeError);
-            }
-        }, 1000);
-        
+            },
+            1000
+        );
+
         ElMessage.success('网卡扫描完成');
     } catch (error) {
         console.error('网卡扫描失败:', error);
@@ -168,53 +221,40 @@ const ifacesFetch = async () => {
     }
 };
 
-watch(ifacesMap, (newIfacesMap) => {
-    const newIfaceList = [];
-    for (const [mac, iface] of newIfacesMap.entries()) {
-        let device = null;
-        if ((deviceManager.store.devices instanceof Map)) {
-            device = deviceManager.store.devices.get(mac);
-        }
-        newIfaceList.push({
-            devID: device ? device.devID : 0,
-            mac: mac,
-            name: iface.name,
-            status: device ? device.status : false
-        });
-    }
-    ifaceList.value = newIfaceList;
-}, { deep: true });
-
 const ifconfigCheckout = (iface) => {
-    if (!iface.name) {
+    if (!iface?.name) {
         ElMessage.warning('需要选择网卡');
         return;
     }
-    
+
     selectedIface.value = iface;
     ifconfigVisible.value = true;
 };
 
 const ifaceLinkUp = async (config) => {
     ifconfigVisible.value = false;
-    console.log(config);
-    const DeviceSpec = netctrl.DeviceSpec.encode({
-        name: config.name,
-        mac: config.mac,
-        config: {
-            dhcp: config.dhcp,
-            ip: config.ip,
-            subnetMask: config.subnetMask,
-            gateway: config.gateway,
-            dns: config.dns
-        }
-    }).finish();    
-    await deviceManager.deviceCreate(DeviceSpec).then((devID) => {
-        console.log('devID', devID);
-        ElMessage.success('设备创建成功')
-    }).catch((error) => {
-        ElMessage.error('设备创建失败', error)
-    })
+    try {
+        const devSpec = netctrl.DeviceSpec.encode({
+            name: config.name,
+            mac: config.mac,
+            config: {
+                useDhcp: config.dhcp,
+                ipAddress: config.ip,
+                mask: config.subnetMask,
+                gateway: config.gateway,
+                dns: config.dns
+            }
+        }).finish();
+        const devHandle = netctrl.DeviceHandle.encode({
+            mac: config.mac,
+        }).finish();
+        await deviceManager.deviceCreate(devSpec, devHandle);
+
+        ElMessage.success('设备创建成功');
+    } catch (error) {
+        console.error('Failed to create device:', error);
+        ElMessage.error('设备创建失败');
+    }
 };
 
 const DialogClose = () => {
@@ -237,7 +277,7 @@ const saveConn = (value) => {
             proxyUrl: '',
             spec: value.spec
         }).finish();
-        deviceManager.deviceConnectCreate(value.devID, connData);
+        deviceManager.deviceConnectCreate(value.devID, connData, value.spec);
         console.log('新增连接:', value);
     }
 
@@ -268,9 +308,9 @@ const deleteConn = (row) => {
 const clearConns = () => {
     deviceManager.store.devices.forEach((device) => {
         device.connectMap.forEach((conn) => {
-            deviceManager.deviceConnectDestroy(device.devID, conn.connID);            
+            deviceManager.deviceConnectDestroy(device.devID, conn.connID);
         });
-        
+
     });
     ElMessage({
         message: '所有连接已清除',

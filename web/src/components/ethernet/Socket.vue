@@ -3,13 +3,13 @@
     <el-form :model="configForm" label-width="100px" label-position="right">
       <el-form-item label="网络接口">
         <div class="select-and-buttons">
-          <el-select v-model="ifaceSelect" placeholder="请选择网卡" class="select-item" value-key="mac">
-            <el-option v-for="item in ifaceList" :key="item.mac" :label="item.name" :value="item">
+          <el-select v-model="ifaceSelectMac" placeholder="请选择网卡" class="select-item">
+            <el-option v-for="[mac, item] in ifaceMap" :key="mac" :label="item.name" :value="mac">
               <div style="display: flex; align-items: center; justify-content: space-between;">
                 <span>
                   {{ item.name }}
-                  <span style="font-size: 0.8em; color: #888;">[{{ item.mac }}]</span>
-                  <span v-if="item.available">
+                  <span style="font-size: 0.8em; color: #888;">[{{ mac }}]</span>
+                  <span v-if="item.status === 'active'">
                     <Check style="max-height: 1em; color: green;" />
                   </span>
                   <span v-else>
@@ -59,7 +59,7 @@ const props = defineProps({
       spec: ''
     })
   },
-  ifaceList: Array
+  ifaceMap: Map
 })
 
 const emit = defineEmits([
@@ -69,12 +69,13 @@ const emit = defineEmits([
   'socketDialogclose',
 ])
 
-const ifaceSelect = ref(null)
+const ifaceSelectMac = ref('')
 
 const configForm = ref(props.formData)
 
 const handleIfaceConfigure = () => {
-  emit('ifaceConfigure', ifaceSelect.value);
+  const selectedIface = props.ifaceMap.get(ifaceSelectMac.value);  
+  emit('ifaceConfigure', selectedIface);
 }
 
 const saveEthConfig = () => {
@@ -90,11 +91,11 @@ const saveEthConfig = () => {
       closeEthConfig();
     } else {
       console.error('Error: configForm is undefined or null');
-      ElMessage.error('保存配置失败，请重试。');
+      ElMessage.error('保存配置失败，请重试。错误信息：' + error.message);
     }
   } catch (error) {
     console.error('保存配置时出错:', error);
-    ElMessage.error('保存配置失败，请重试。');
+    ElMessage.error('保存配置失败，请重试。错误信息：' + error.message);
   }
 }
 
@@ -103,7 +104,7 @@ const closeEthConfig = () => {
     emit('socketDialogclose');
   } catch (error) {
     console.error('关闭配置时出错:', error);
-    ElMessage.error('关闭配置失败，请重试。');
+    ElMessage.error('关闭配置失败，请重试。错误信息：' + error.message);
   }
 };
 
@@ -113,7 +114,7 @@ onMounted(() => {
     ElMessage.info('获取网卡');
   } catch (error) {
     console.error('获取网卡时出错:', error);
-    ElMessage.error('获取网卡失败，请重试。');
+    ElMessage.error('获取网卡失败，请重试。错误信息：' + error.message);
   }
 })
 </script>

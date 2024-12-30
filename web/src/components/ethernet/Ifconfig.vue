@@ -103,7 +103,6 @@ const ifconfigSubmit = () => {
             message: '配置已保存',
             type: 'success'
         });
-        console.log('ifconfig submit', configForm.value);
         emit('ifconfigSubmit', configForm.value);
     } else {
         console.log('error ifconfig submit!!')

@@ -10,10 +10,10 @@ import { API_CONFIG } from '../config'
 const request = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   headers: {
-    'Content-Type': 'application/proto'
+    'Content-Type': 'application/proto',    
   },
-  responseType: 'text',
-  exposedHeaders: ['grpc-status', 'grpc-message', 'grpc-status-details-bin']
+  responseType: 'arraybuffer',  
+  exposedHeaders: ['grpc-status', 'grpc-message', 'grpc-status-details-bin'],
 })
 
 /**
@@ -31,14 +31,20 @@ export const protoRequest = async (prefix, url, data = null, method = 'POST') =>
     const response = await request({
       url: fullUrl,
       method,
-      data: new Uint8Array(data),
+      data: data ? new Uint8Array(data) : null,
     })
-    console.log('Proto request response:', response)
-    // Convert text response to ArrayBuffer for protobuf decoding
-    const encoder = new TextEncoder();
-    return encoder.encode(response.data).buffer
+    
+    // 检查gRPC状态码
+    const grpcStatus = response.headers['grpc-status']
+    if (grpcStatus === '0') {
+      return new Uint8Array(response.data)
+    }
+    
+    // 抛出gRPC错误
+    const grpcMessage = response.headers['grpc-message'] || 'Unknown gRPC error'
+    throw new Error(`gRPC error: ${grpcMessage}`)
   } catch (error) {
-    console.error('Proto request failed:', error)
+    // 处理HTTP错误    
     throw error
   }
 }
@@ -56,7 +62,7 @@ export const wsProtoRequest = (prefix, url, data = null, onMessage, onError) => 
   const fullUrl = `${prefix}stream/${API_CONFIG.API_VERSION_PATH}/${url}`
   const wsUrl = `${API_CONFIG.WS_PREFIX}/${fullUrl}`
   const ws = new WebSocket(wsUrl)
-  ws.binaryType = 'arraybuffer' 
+  ws.binaryType = 'arraybuffer'
   ws.onopen = () => {
     if (data) {
       ws.send(data)
