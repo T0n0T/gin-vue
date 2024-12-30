@@ -2,6 +2,7 @@ import { deviceApi } from '../api/device'
 import { adapterApi } from '../api/adapter'
 import { useDeviceStore } from '../store/device'
 import { api, google } from '../proto/wireless'
+import { kvGet, kvPut, kvDelete } from '../utils/kv'
 
 /**
  * 设备连接类
@@ -11,10 +12,10 @@ import { api, google } from '../proto/wireless'
  * @property {Object|null} connConfig - 连接配置信息
  */
 export class Connect {
-    constructor(connID, connData = null, status = false) {
+    constructor(connID, status = false) {
         this.connID = connID
         this.status = status // available状态
-        this.connData = connData
+        this.connData = null
     }
 }
 
@@ -41,6 +42,7 @@ export class Device {
         this.status = status // active/inactive/retrying
         this.deviceHandle = deviceHandle
         this.connectMap = new Map() // 存储连接的Map
+        this.deviceData = null // 存储设备创建时的数据
     }
 }
 
@@ -143,11 +145,13 @@ export class DeviceManager {
             }).finish();
             await deviceApi.createDevice(encodedContext, this.deviceType)
             const devID = this.deviceIdentify(deviceHandle)
-            this.store.addDevice(new Device(
+            const device = new Device(
                 devID,
                 DeviceStatus.INACTIVE,
                 deviceHandle,
-            ))
+            )
+            device.deviceData = deviceData
+            this.store.addDevice(device)
             return devID
         } catch (error) {
             throw error
@@ -164,7 +168,7 @@ export class DeviceManager {
         try {
             // 调用API销毁设备
             const context = api.wireless.v1.DeviceID.create({
-                devID: devID
+                ID: devID
             });
             const encodedContext = api.wireless.v1.DeviceID.encode(context).finish();
 
@@ -241,7 +245,7 @@ export class DeviceManager {
             // 生成连接ID并创建连接实例
             const connID = this.connectIdentify(connSepc)
             const connect = new Connect(connID, false)
-
+            // connect.connData = kvGet(`${devID}/${connID}`)
             // 将连接添加到设备的connectMap中
             const device = this.store.getDevice(devID)
             if (device) {
@@ -264,11 +268,10 @@ export class DeviceManager {
     async deviceConnectDestroy(devID, connID) {
         try {
             // 创建proto的ConnectDestroyContext
-            const context = api.wireless.v1.ConnectDestroyContext.create({
+            const encodedContext = api.wireless.v1.ConnectDestroyContext.encode({
                 devID: devID,
                 connID: connID
-            });
-            const encodedContext = api.wireless.v1.ConnectDestroyContext.encode(context).finish();
+            }).finish();
 
             // 调用API销毁连接
             await deviceApi.destroyDeviceConnect(encodedContext, this.deviceType)
@@ -296,10 +299,9 @@ export class DeviceManager {
     async deviceConnectCheck(devID) {
         try {
             // 创建并序列化ConnectCheckContext
-            const context = api.wireless.v1.DeviceID.create({
-                devID: devID
-            });
-            const encodedContext = api.wireless.v1.DeviceID.encode(context).finish();
+            const encodedContext = api.wireless.v1.DeviceID.encode({
+                ID: devID
+            }).finish();
 
             // 调用API检查连接
             const response = await deviceApi.checkDeviceConnect(encodedContext, this.deviceType)
@@ -314,7 +316,6 @@ export class DeviceManager {
 
             for (const [connID, connectStatus] of Object.entries(connectStatusList)) {
                 const connect = device.connectMap.get(parseInt(connID))
-
                 if (connect) {
                     // 更新已存在连接的状态
                     connect.status = connectStatus.status
@@ -322,10 +323,11 @@ export class DeviceManager {
                 } else {
                     // 创建新的连接实例
                     const newConnect = new Connect(
-                        parseInt(connID),
-                        connectStatus.status,
-                        connectStatus.connectSpec
+                        parseInt(connID),                        
+                        connectStatus.status,                        
                     )
+                    newConnect.connData = await kvGet(`${devID}/${connID}`)
+                    console.log(newConnect.connData)
                     device.connectMap.set(parseInt(connID), newConnect)
                 }
             }

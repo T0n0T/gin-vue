@@ -43,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { CloseBold, Select, Setting, Refresh, Check, Close } from '@element-plus/icons-vue'
 import { v4 as uuidv4 } from 'uuid';
@@ -70,12 +70,11 @@ const emit = defineEmits([
 ])
 
 const ifaceSelectMac = ref('')
-
+const selectedIface = computed(() => props.ifaceMap.get(ifaceSelectMac.value))
 const configForm = ref(props.formData)
 
 const handleIfaceConfigure = () => {
-  const selectedIface = props.ifaceMap.get(ifaceSelectMac.value);  
-  emit('ifaceConfigure', selectedIface);
+  emit('ifaceConfigure', selectedIface.value);
 }
 
 const saveEthConfig = () => {
@@ -85,7 +84,7 @@ const saveEthConfig = () => {
         message: '配置已保存',
         type: 'success'
       });
-
+      configForm.value.devID = selectedIface.value.devID;
       configForm.value.spec = uuidv4().toString();
       emit('socketDialogSubmit', configForm.value);
       closeEthConfig();

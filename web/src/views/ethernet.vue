@@ -78,11 +78,7 @@ const ifconfigVisible = ref(false);
 
 // 网卡选择
 const ifacesMap = ref(new Map())
-const selectedIface = ref({
-    name: '',
-    mac: '',
-    status: false
-});
+const selectedIface = ref({});
 
 // 对话框内容
 const isEdit = ref(false);
@@ -96,46 +92,15 @@ const dialogTitle = computed(() => {
 // 连接表格
 const ethConnTable = ref(null);
 const searchQuery = ref('');
+const connsMap = ref(new Map());
 const filteredConnections = computed(() => {
-    const devices = deviceManager.store.devices;
-    if (!(devices instanceof Map)) {
-        return [];
-    }
-    const connections = []; // 用于存储最终的连接信息
-
-    // 遍历 devices
-    for (const [deviceHandle, device] of devices) {
-        // 使用 deviceHandle 在 ifacesMap 中查找对应的接口
-        const iface = ifacesMap.value.get(deviceHandle);
-        if (iface) {
-            const interfaceName = iface.name; // 获取接口名称
-
-            // 遍历 device 的 connectMap
-            for (const [connID, connData] of Object.entries(device.connectMap)) {
-                // connData 应该包含 url
-                const url = connData.url; // 假设 url 的形式是 scheme://ip:port
-                const [scheme, rest] = url.split('://'); // 解析 scheme
-                const [ip, port] = rest.split(':'); // 解析 ip 和 port
-
-                // 构建连接对象
-                connections.push({
-                    devID: device.devID,
-                    connID: connID,
-                    interfaceName: interfaceName,
-                    selectedProtocol: scheme, // 使用 scheme 作为 selectedProtocol
-                    remoteAddr: `${ip}:${port}` // 使用 ip:port 作为 remoteAddr
-                });
-            }
-        }
-    }
-
     // 如果没有搜索查询，返回所有连接
     if (!searchQuery.value) {
-        return connections;
+        return Array.from(connsMap.value.values());
     }
 
     const query = searchQuery.value.toLowerCase();
-    return connections.filter(conn =>
+    return Array.from(connsMap.value.values()).filter(conn =>
         conn.interfaceName.toLowerCase().includes(query) ||
         conn.selectedProtocol.toLowerCase().includes(query) ||
         conn.remoteAddr.toLowerCase().includes(query)
@@ -150,6 +115,11 @@ onMounted(() => {
     timer = setInterval(async () => {
         try {
             await deviceManager.deviceCheck();
+            for (const devID of deviceManager.store.devices.keys()) {
+                // if (device.status === 'active') {
+                    await deviceManager.deviceConnectCheck(devID);
+                // }
+            }
         } catch (error) {
             console.error('Failed to check devices:', error);
         }
@@ -160,17 +130,15 @@ onUnmounted(() => {
     clearInterval(timer);
 });
 
-// 监听 deviceManager.store.devices 的变化
+// 监听 deviceManager.store.devices 的变化，实时更新connect列表
 watch(
     () => deviceManager.store.devices,
     () => {
+        // 更新iface状态
         for (const [mac, iface] of ifacesMap.value.entries()) {
-            // 创建 deviceHandle
             const devHandle = netctrl.DeviceHandle.encode({
                 mac: mac,
             }).finish();
-
-            // 获取设备状态
             const devID = deviceManager.deviceIdentify(devHandle);
             const device = deviceManager.store.getDevice(devID);
             if (device) {
@@ -181,6 +149,36 @@ watch(
                 });
             }
         }
+
+        // // 更新connect列表
+        // for (const [devID, device] of deviceManager.store.devices.entries()) {
+        //     const iface = Array.from(ifacesMap.value.values()).find(i => i.devID === devID);
+        //     for (const [connID, connect] of device.connectMap.entries()) {
+        //         const connData = netctrl.ConnectData.decode(connect.connData);
+        //         const key = `${devID}-${connID}`;
+        //         connsMap.value.set(key, {
+        //             devID: devID,
+        //             connID: connID,
+        //             status: connect.status,
+        //             interfaceName: iface ? iface.name : devID,
+        //             selectedProtocol: connData?.url?.split('://')[0] || '',
+        //             remoteAddr: connData?.url?.split('://')[1] || ''
+        //         });
+        //     }
+        // }
+        // // 移除已删除的connect
+        // const activeKeys = new Set();
+        // for (const [devID, device] of deviceManager.store.devices.entries()) {
+        //     for (const connID of device.connectMap.keys()) {
+        //         activeKeys.add(`${devID}-${connID}`);
+        //     }
+        // }
+        // for (const key of connsMap.value.keys()) {
+        //     if (!activeKeys.has(key)) {
+        //         connsMap.value.delete(key);
+        //     }
+        // }
+        // console.log('connects:', Array.from(connsMap.value.values()));
     },
     { deep: true, immediate: true }
 );
@@ -222,6 +220,7 @@ const ifacesFetch = async () => {
 };
 
 const ifconfigCheckout = (iface) => {
+    console.log('iface:', iface);
     if (!iface?.name) {
         ElMessage.warning('需要选择网卡');
         return;
@@ -229,6 +228,25 @@ const ifconfigCheckout = (iface) => {
 
     selectedIface.value = iface;
     ifconfigVisible.value = true;
+
+    // 尝试从deviceManager中获取设备配置
+    const device = deviceManager.store.getDevice(iface.devID);
+    if (device && device.deviceData) {
+        // 解码deviceData
+        const decodedDeviceData = netctrl.DeviceSpec.decode(device.deviceData);
+
+        // 构造editingIfaceConfig
+        const editingIfaceConfig = {
+            dhcp: decodedDeviceData.config.useDhcp,
+            ip: decodedDeviceData.config.ipAddress,
+            subnetMask: decodedDeviceData.config.mask,
+            gateway: decodedDeviceData.config.gateway,
+            dns: decodedDeviceData.config.dns
+        };
+
+        // 将配置传递给Ifconfig组件
+        selectedIface.value.config = editingIfaceConfig;
+    }
 };
 
 const ifaceLinkUp = async (config) => {

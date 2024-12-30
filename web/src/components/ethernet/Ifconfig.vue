@@ -38,16 +38,13 @@ const props = defineProps({
         default: () => ({
             name: '',
             mac: '',
-        })
-    },
-    configTemplate: {
-        type: Object,
-        default: () => ({
-            dhcp: false,
-            ip: '',
-            subnetMask: '',
-            gateway: '',
-            dns: ''
+            config: {
+                dhcp: false,
+                ip: '',
+                subnetMask: '',
+                gateway: '',
+                dns: ''
+            }
         })
     }
 });
@@ -90,7 +87,7 @@ const rules = ref({
 });
 
 onMounted(() => {
-    configForm.value = {...props.configTemplate}
+    configForm.value = {...props.iface.config}
 })
 
 const emit = defineEmits(['ifconfigSubmit', 'ifconfigClose'])
