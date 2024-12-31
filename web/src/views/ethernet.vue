@@ -58,23 +58,23 @@ let timer
 
 const deviceManager = new DeviceManager(
     'net',
-    (deviceHandle) => {
-        const uuid = uuidv5(deviceHandle, '6ba7b811-9dad-11d1-80b4-00c04fd430c8');
-        const uuidBytes = uuid.replace(/-/g, '').substring(0, 8);
-        const uint32 = (parseInt(uuidBytes.substring(0, 2), 16) << 24) |
-            (parseInt(uuidBytes.substring(2, 4), 16) << 16) |
-            (parseInt(uuidBytes.substring(4, 6), 16) << 8) |
-            parseInt(uuidBytes.substring(6, 8), 16);
-        return uint32 >>> 0;
+    (device) => {
+        try {
+            const handle = netctrl.DeviceHandle.decode(device?.deviceHandle);
+            return handle.mac;
+        } catch (error) {
+            console.error('Failed to make device identify:', error);
+            return '';
+        }
     },
-    (connectSpec) => {
-        const uuid = uuidv5(connectSpec, '6ba7b811-9dad-11d1-80b4-00c04fd430c8');
-        const uuidBytes = uuid.replace(/-/g, '').substring(0, 8);
-        const uint32 = (parseInt(uuidBytes.substring(0, 2), 16) << 24) |
-            (parseInt(uuidBytes.substring(2, 4), 16) << 16) |
-            (parseInt(uuidBytes.substring(4, 6), 16) << 8) |
-            parseInt(uuidBytes.substring(6, 8), 16);
-        return uint32 >>> 0;
+    (connect) => {
+        try {
+            const data = netctrl.ConnectData.decode(connect.connData);
+            return data.url;
+        } catch (error) {
+            console.error('Failed to make connect identify:', error);
+            return '';
+        }
     }
 )
 

@@ -133,13 +133,13 @@
  * @description 提供路由的管理功能，包括添加、编辑、删除路由，以及拓扑图和表格两种视图的切换
  */
 
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Plus, Grid, View } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { useConnectionStore } from '@/store/connect'
 import { storeToRefs } from 'pinia'
-import { useRouterStore } from '@/store/router'
-import RouterTopology from '@/components/routerMngr/TopologyGraph.vue'
+import { useConnectionStore } from '../store/connect'
+import { useRouterStore } from '../store/router'
+import RouterTopology from '../components/routerMngr/TopologyGraph.vue'
 
 /**
  * @type {import('vue').Ref<boolean>} 是否显示拓扑图视图
@@ -281,25 +281,6 @@ const handleRouteSelect = (route) => {
 const connectionStore = useConnectionStore()
 const { bluetoothConnections, networkConnections } = storeToRefs(connectionStore)
 
-/**
- * @type {import('vue').ComputedRef<Array>} 所有可用的连接列表
- */
-const availableConnections = computed(() => {
-    return [
-        ...bluetoothConnections.value.map(conn => ({
-            value: `bluetooth:${conn.id}`,
-            label: `蓝牙: ${conn.name}`,
-            type: 'bluetooth',
-            detail: conn
-        })),
-        ...networkConnections.value.map(conn => ({
-            value: `network:${conn.id}`,
-            label: `网络: ${conn.address}`,
-            type: 'network',
-            detail: conn
-        }))
-    ]
-})
 
 /**
  * @type {import('vue').ComputedRef<Array>} 过滤后的输入连接列表
