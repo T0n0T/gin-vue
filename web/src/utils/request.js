@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { API_CONFIG } from '../config'
 
 /**
  * 创建一个预配置的 axios 实例，用于处理 protobuf 请求。
@@ -8,7 +7,7 @@ import { API_CONFIG } from '../config'
  * 所有通过这个实例发送的请求都将使用这些基本配置。
  */
 const request = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
+  baseURL: '/service',
   headers: {
     'Content-Type': 'application/proto',    
   },
@@ -27,7 +26,7 @@ const request = axios.create({
  */
 export const protoRequest = async (prefix, url, data = null, method = 'POST') => {
   try {
-    const fullUrl = `${prefix}/${API_CONFIG.API_VERSION_PATH}/${url}`
+    const fullUrl = `${prefix}/${process.env.API_VERSION_PATH}/${url}`
     const response = await request({
       url: fullUrl,
       method,
@@ -59,8 +58,8 @@ export const protoRequest = async (prefix, url, data = null, method = 'POST') =>
  * @returns {Object} 返回一个对象，包含关闭WebSocket的方法和WebSocket实例。
  */
 export const wsProtoRequest = (prefix, url, data = null, onMessage, onError) => {
-  const fullUrl = `${prefix}stream/${API_CONFIG.API_VERSION_PATH}/${url}`
-  const wsUrl = `${API_CONFIG.WS_PREFIX}/${fullUrl}`
+  const fullUrl = `${prefix}stream/${process.env.API_VERSION_PATH}/${url}`
+  const wsUrl = `${process.env.WS_PREFIX}/${fullUrl}`
   const ws = new WebSocket(wsUrl)
   ws.binaryType = 'arraybuffer'
   ws.onopen = () => {

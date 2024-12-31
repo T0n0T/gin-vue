@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { API_CONFIG } from '../config';
 
 const consulRequest = axios.create({
   baseURL: '/consul',
