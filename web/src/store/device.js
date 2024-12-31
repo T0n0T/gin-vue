@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { DeviceManager } from '../core/devMngr'
 
 /**
  * 设备管理器Store

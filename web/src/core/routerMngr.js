@@ -4,10 +4,10 @@ import { api } from '../proto/wireless'
 
 // Entry类定义
 class Entry {
-  constructor(devType, devId, connId) {
+  constructor(devType, devID, connID) {
     this.devType = devType
-    this.devId = devId
-    this.connId = connId
+    this.devID = devID
+    this.connID = connID
     this.refCount = 0  // 引用计数
   }
 }
@@ -15,8 +15,8 @@ class Entry {
 /**
  * @typedef {Object} RouterEntry
  * @property {string} devType - 设备类型
- * @property {string} devId - 设备ID
- * @property {string} connId - 连接ID
+ * @property {string} devID - 设备ID
+ * @property {string} connID - 连接ID
  */
 
 /**
@@ -44,20 +44,36 @@ class Channel {
 export class RouterManager {
   constructor() {
     this.store = useRouterStore()
-    this.entries = new Map()  // 存储Entry，key为devId_connId
+    this.entries = new Map()  // 存储Entry，key为devID_connID
     this.channels = new Map() // 存储Channel对象，key为topic
+    for (const route of this.store.routes) {
+      // 创建或获取Entry
+      const upEntry = this.getOrCreateEntry(
+        route.upEntry.devType,
+        route.upEntry.devID,
+        route.upEntry.connID
+      )
+      const downEntry = this.getOrCreateEntry(
+        route.downEntry.devType,
+        route.downEntry.devID,
+        route.downEntry.connID
+      )
+      upEntry.refCount++
+      downEntry.refCount++
+    }
   }
 
+
   // 生成Entry的key
-  getEntryKey(devId, connId) {
-    return `${devId}_${connId}`
+  getEntryKey(devID, connID) {
+    return `${devID}_${connID}`
   }
 
   // 获取或创建Entry
-  getOrCreateEntry(devType, devId, connId) {
-    const key = this.getEntryKey(devId, connId)
+  getOrCreateEntry(devType, devID, connID) {
+    const key = this.getEntryKey(devID, connID)
     if (!this.entries.has(key)) {
-      this.entries.set(key, new Entry(devType, devId, connId))
+      this.entries.set(key, new Entry(devType, devID, connID))
     }
     return this.entries.get(key)
   }
@@ -70,10 +86,10 @@ export class RouterManager {
   async addRouter(newRouter) {
     // 检查是否已存在相同的router
     const existingRouter = this.store.routes.find(r =>
-      r.upEntry.devId === newRouter.upEntry.devId &&
-      r.upEntry.connId === newRouter.upEntry.connId &&
-      r.downEntry.devId === newRouter.downEntry.devId &&
-      r.downEntry.connId === newRouter.downEntry.connId
+      r.upEntry.devID === newRouter.upEntry.devID &&
+      r.upEntry.connID === newRouter.upEntry.connID &&
+      r.downEntry.devID === newRouter.downEntry.devID &&
+      r.downEntry.connID === newRouter.downEntry.connID
     )
 
     if (existingRouter) return
@@ -81,13 +97,13 @@ export class RouterManager {
     // 创建或更新Entry
     const upEntry = this.getOrCreateEntry(
       newRouter.upEntry.devType,
-      newRouter.upEntry.devId,
-      newRouter.upEntry.connId
+      newRouter.upEntry.devID,
+      newRouter.upEntry.connID
     )
     const downEntry = this.getOrCreateEntry(
       newRouter.downEntry.devType,
-      newRouter.downEntry.devId,
-      newRouter.downEntry.connId
+      newRouter.downEntry.devID,
+      newRouter.downEntry.connID
     )
     upEntry.refCount++
     downEntry.refCount++
@@ -120,8 +136,8 @@ export class RouterManager {
   }
 
   async handleChannels(router) {
-    const upKey = this.getEntryKey(router.upEntry.devId, router.upEntry.connId)
-    const downKey = this.getEntryKey(router.downEntry.devId, router.downEntry.connId)
+    const upKey = this.getEntryKey(router.upEntry.devID, router.upEntry.connID)
+    const downKey = this.getEntryKey(router.downEntry.devID, router.downEntry.connID)
     const upEntry = this.entries.get(upKey)
     const downEntry = this.entries.get(downKey)
 
@@ -198,16 +214,16 @@ export class RouterManager {
     // 绑定上行channel
     const encodedUpBindContext = api.wireless.v1.ChannelBindContext.encode({
       chanId: upChanId,
-      devID: parseInt(upEntry.devId),
-      connID: parseInt(upEntry.connId)
+      devID: parseInt(upEntry.devID),
+      connID: parseInt(upEntry.connID)
     }).finish()
     await channelApi.bindChannel(encodedUpBindContext, `${upEntry.devType}`)
 
     // 绑定下行channel
     const encodedDownBindContext = api.wireless.v1.ChannelBindContext.encode({
       chanId: downChanId,
-      devID: parseInt(downEntry.devId),
-      connID: parseInt(downEntry.connId)
+      devID: parseInt(downEntry.devID),
+      connID: parseInt(downEntry.connID)
     }).finish()
     await channelApi.bindChannel(encodedDownBindContext, `${downEntry.devType}`)
   }
@@ -218,8 +234,8 @@ export class RouterManager {
    * @returns {Promise<void>}
    */
   async removeRouter(router) {
-    const upKey = this.getEntryKey(router.upEntry.devId, router.upEntry.connId)
-    const downKey = this.getEntryKey(router.downEntry.devId, router.downEntry.connId)
+    const upKey = this.getEntryKey(router.upEntry.devID, router.upEntry.connID)
+    const downKey = this.getEntryKey(router.downEntry.devID, router.downEntry.connID)
 
     // 更新Entry引用计数
     const upEntry = this.entries.get(upKey)
@@ -260,8 +276,8 @@ export class RouterManager {
           }
           const encodedBindContext = api.wireless.v1.ChannelBindContext.encode({
             chanId: chanId,
-            devID: parseInt(entry.devId),
-            connID: parseInt(entry.connId)
+            devID: parseInt(entry.devID),
+            connID: parseInt(entry.connID)
           }).finish()
           await channelApi.unbindChannel(encodedBindContext, `${entry.devType}`)
 
@@ -285,8 +301,8 @@ export class RouterManager {
           const entry = this.entries.get(entryKey)
           const encodedBindContext = api.wireless.v1.ChannelBindContext.encode({
             chanId: chanId,
-            devID: parseInt(entry.devId),
-            connID: parseInt(entry.connId)
+            devID: parseInt(entry.devID),
+            connID: parseInt(entry.connID)
           }).finish()
           await channelApi.unbindChannel(encodedBindContext, `${entry.devType}`)
 

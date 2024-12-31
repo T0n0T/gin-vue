@@ -1,25 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { RouterManager } from '../core/routerMngr'
 
 export const useRouterStore = defineStore('router', () => {
     // 存储路由列表
     const routes = ref([])
-    // 存储RouterManager实例
-    const routerManager = ref(null)
-
-    // 初始化RouterManager
-    const initRouterManager = () => {
-        if (!routerManager.value) {
-            routerManager.value = new RouterManager()
-        }
-        return routerManager.value
-    }
-
-    // 获取RouterManager实例
-    const getRouterManager = () => {
-        return routerManager.value || initRouterManager()
-    }
 
     // 添加路由
     const addRoute = (route) => {
@@ -49,9 +33,6 @@ export const useRouterStore = defineStore('router', () => {
 
     return {
         routes,
-        routerManager,
-        getRouterManager,
-        initRouterManager,
         addRoute,
         updateRoute,
         deleteRoute,
