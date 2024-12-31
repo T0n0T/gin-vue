@@ -7,7 +7,7 @@ import axios from 'axios'
  * 所有通过这个实例发送的请求都将使用这些基本配置。
  */
 const request = axios.create({
-  baseURL: '/service',
+  baseURL: process.env.BASE_URL,
   headers: {
     'Content-Type': 'application/proto',    
   },

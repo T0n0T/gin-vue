@@ -85,7 +85,9 @@ const saveEthConfig = () => {
         type: 'success'
       });
       configForm.value.devID = selectedIface.value.devID;
-      configForm.value.spec = uuidv4().toString();
+      if (!configForm.value.spec) {
+        configForm.value.spec = uuidv4().toString();
+      }
       emit('socketDialogSubmit', configForm.value);
       closeEthConfig();
     } else {
@@ -111,6 +113,14 @@ onMounted(() => {
   try {
     emit('ifaceFetch');
     ElMessage.info('获取网卡');
+    if (props.formData.devID) {    
+      for (const iface of props.ifaceMap.values()) {
+        if (iface.devID === props.formData.devID) {
+          ifaceSelectMac.value = iface.mac;
+          break;
+        }
+      }
+    }
   } catch (error) {
     console.error('获取网卡时出错:', error);
     ElMessage.error('获取网卡失败，请重试。错误信息：' + error.message);

@@ -25,7 +25,7 @@ export class Connect {
  */
 export const DeviceStatus = {
     ACTIVE: 'active',
-    INACTIVE: 'inactive',    
+    INACTIVE: 'inactive',
 }
 
 /**
@@ -245,7 +245,7 @@ export class DeviceManager {
             // 生成连接ID并创建连接实例
             const connID = this.connectIdentify(connSepc)
             const connect = new Connect(connID, false)
-            // connect.connData = kvGet(`${devID}/${connID}`)
+            connect.connData = await kvGet(`${devID}/${connID}`)
             // 将连接添加到设备的connectMap中
             const device = this.store.getDevice(devID)
             if (device) {
@@ -323,14 +323,31 @@ export class DeviceManager {
                 } else {
                     // 创建新的连接实例
                     const newConnect = new Connect(
-                        parseInt(connID),                        
-                        connectStatus.status,                        
+                        parseInt(connID),
+                        connectStatus.status,
                     )
                     newConnect.connData = await kvGet(`${devID}/${connID}`)
                     console.log(newConnect.connData)
                     device.connectMap.set(parseInt(connID), newConnect)
                 }
             }
+        } catch (error) {
+            throw error
+        }
+    }
+
+
+    /**
+     * 更新设备连接
+     * @param {number} devID - 设备ID
+     * @param {number} connID - 连接ID
+     * @param {Object} connData - 连接配置数据
+     * @throws {Error} 当配置连接失败时抛出错误
+     * @returns {Promise<void>}
+     */
+    async deviceConnectUpdate(devID, connID, connData) {
+        try {
+            await kvPut(`${devID}/${connID}`, connData)
         } catch (error) {
             throw error
         }

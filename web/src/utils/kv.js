@@ -2,7 +2,6 @@ import axios from 'axios';
 
 const consulRequest = axios.create({
   baseURL: '/consul',
-  timeout: 5000
 });
 
 /**
@@ -12,15 +11,11 @@ const consulRequest = axios.create({
  */
 export const kvGet = async (key) => {
   try {
-    const response = await consulRequest.get(`/v1/kv/${key}`);
-    if (response.data && response.data.length > 0) {
-      const base64Data = response.data[0].Value;
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      return bytes;
+    const response = await consulRequest.get(`/v1/kv/${key}`, {
+      responseType: 'arraybuffer'
+    });
+    if (response.data && response.data.byteLength > 0) {
+      return new Uint8Array(response.data);
     }
     return null;
   } catch (error) {
@@ -37,9 +32,11 @@ export const kvGet = async (key) => {
  */
 export const kvPut = async (key, value) => {
   try {
-    const binaryString = String.fromCharCode(...value);
-    const base64Value = btoa(binaryString);
-    await consulRequest.put(`/v1/kv/${key}`, base64Value);
+    await consulRequest.put(`/v1/kv/${key}`, value, {
+      headers: {
+        'Content-Type': 'application/octet-stream'
+      }
+    });
     return true;
   } catch (error) {
     console.error('Failed to put key:', error);

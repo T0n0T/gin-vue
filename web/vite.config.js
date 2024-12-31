@@ -20,20 +20,18 @@ export default defineConfig(({ mode }) => {
       host: true,
       listen: '0.0.0.0',
       proxy: {
-        '/service': {
-          target: env.VITE_BASE_URL,
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/service/, '')
-        },
         '/consul': {
           target: env.VITE_CONSUL_URL,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/consul/, '')
+          rewrite: (path) => path.replace(/^\/consul/, ''),
+          timeout: 5000
         }
       }
     },
     define: {
       'process.env': {
+        BASE_URL: env.VITE_BASE_URL,
+        CONSUL_URL: env.VITE_CONSUL_URL,
         WS_PREFIX: env.VITE_WS_PREFIX,
         API_VERSION_PATH: env.VITE_API_VERSION_PATH
       }

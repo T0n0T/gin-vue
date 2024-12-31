@@ -21,7 +21,13 @@
             </div>
             <el-table ref="ethConnTable" :data="filteredConnections" :border="true" style="width: 100%"
                 highlight-current-row>
-                <el-table-column prop="interfaceName" label="连接名称" />
+            
+                <el-table-column width="5">
+                    <template #default="{ row }">
+                        <div :class="['status-indicator', row.status ? 'connected' : 'disconnected']"></div>
+                    </template>
+                </el-table-column>
+                <el-table-column prop="interfaceName" label="网络接口" />
                 <el-table-column prop="selectedProtocol" label="协议" />
                 <el-table-column prop="remoteAddr" label="远端URL" />
                 <el-table-column label="操作" width="120">
@@ -117,7 +123,7 @@ onMounted(() => {
             await deviceManager.deviceCheck();
             for (const devID of deviceManager.store.devices.keys()) {
                 // if (device.status === 'active') {
-                    await deviceManager.deviceConnectCheck(devID);
+                await deviceManager.deviceConnectCheck(devID);
                 // }
             }
         } catch (error) {
@@ -151,33 +157,35 @@ watch(
         }
 
         // // 更新connect列表
-        // for (const [devID, device] of deviceManager.store.devices.entries()) {
-        //     const iface = Array.from(ifacesMap.value.values()).find(i => i.devID === devID);
-        //     for (const [connID, connect] of device.connectMap.entries()) {
-        //         const connData = netctrl.ConnectData.decode(connect.connData);
-        //         const key = `${devID}-${connID}`;
-        //         connsMap.value.set(key, {
-        //             devID: devID,
-        //             connID: connID,
-        //             status: connect.status,
-        //             interfaceName: iface ? iface.name : devID,
-        //             selectedProtocol: connData?.url?.split('://')[0] || '',
-        //             remoteAddr: connData?.url?.split('://')[1] || ''
-        //         });
-        //     }
-        // }
-        // // 移除已删除的connect
-        // const activeKeys = new Set();
-        // for (const [devID, device] of deviceManager.store.devices.entries()) {
-        //     for (const connID of device.connectMap.keys()) {
-        //         activeKeys.add(`${devID}-${connID}`);
-        //     }
-        // }
-        // for (const key of connsMap.value.keys()) {
-        //     if (!activeKeys.has(key)) {
-        //         connsMap.value.delete(key);
-        //     }
-        // }
+        for (const [devID, device] of deviceManager.store.devices.entries()) {
+            const iface = Array.from(ifacesMap.value.values()).find(i => i.devID === devID);
+            for (const [connID, connect] of device.connectMap.entries()) {
+                const connData = netctrl.ConnectData.decode(connect.connData);
+                const key = `${devID}-${connID}`;
+                connsMap.value.set(key, {
+                    devID: devID,
+                    connID: connID,
+                    status: connect.status,
+                    interfaceName: iface ? iface.name : devID,
+                    selectedProtocol: connData?.url?.split('://')[0] || '',
+                    proxyUrl: connData?.proxyUrl || '',
+                    remoteAddr: connData?.url?.split('://')[1] || '',
+                    spec: connData?.spec || ''
+                });
+            }
+        }
+        // 移除已删除的connect
+        const activeKeys = new Set();
+        for (const [devID, device] of deviceManager.store.devices.entries()) {
+            for (const connID of device.connectMap.keys()) {
+                activeKeys.add(`${devID}-${connID}`);
+            }
+        }
+        for (const key of connsMap.value.keys()) {
+            if (!activeKeys.has(key)) {
+                connsMap.value.delete(key);
+            }
+        }
         // console.log('connects:', Array.from(connsMap.value.values()));
     },
     { deep: true, immediate: true }
@@ -185,6 +193,7 @@ watch(
 
 
 const openNewConnDialog = () => {
+    editConn.value = null;
     newConnDialogVisible.value = true;
     ifconfigVisible.value = false;
 };
@@ -285,16 +294,17 @@ const DialogClose = () => {
 };
 
 const saveConn = (value) => {
-    if (isEdit.value) {
-        // 编辑现有连接,使用consul
-        console.log('编辑连接:', editingRow.value);
-    } else {
-        // 新增连接
-        const connData = netctrl.ConnectData.encode({
+    const connData = netctrl.ConnectData.encode({
             url: `${value.selectedProtocol}://${value.remoteAddr}`,
             proxyUrl: '',
             spec: value.spec
         }).finish();
+    if (isEdit.value) {
+        // 编辑现有连接,使用consul
+        console.log('编辑连接:', editingRow.value);
+        deviceManager.deviceConnectUpdate(value.devID, value.connID, connData);
+    } else {
+        // 新增连接
         deviceManager.deviceConnectCreate(value.devID, connData, value.spec);
         console.log('新增连接:', value);
     }
@@ -390,5 +400,20 @@ const handleSearch = () => {
     display: flex;
     justify-content: flex-start;
     margin-bottom: 15px;
+}
+.status-indicator {
+    width: 5px;
+    height: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.status-indicator.connected {
+    background-color: rgb(0, 255, 0);
+}
+
+.status-indicator.disconnected {
+    background-color: red;
 }
 </style>
