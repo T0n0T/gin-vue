@@ -115,8 +115,6 @@ const filteredConnections = computed(() => {
 
 
 onMounted(() => {
-    console.log("init deviceManager", deviceManager);
-
     // 启动定时器，每5秒检查一次设备状态
     timer = setInterval(async () => {
         try {
@@ -255,6 +253,7 @@ const ifconfigCheckout = (iface) => {
         // 将配置传递给Ifconfig组件
         selectedIface.value.config = editingIfaceConfig;
     }
+    console.log('selectedIface:', selectedIface.value);
 };
 
 const ifaceLinkUp = async (config) => {
@@ -271,10 +270,7 @@ const ifaceLinkUp = async (config) => {
                 dns: config.dns
             }
         }).finish();
-        const devHandle = netctrl.DeviceHandle.encode({
-            mac: config.mac,
-        }).finish();
-        await deviceManager.deviceCreate(devSpec, devHandle);
+        await deviceManager.deviceCreate(devSpec);
 
         ElMessage.success('设备创建成功');
     } catch (error) {
@@ -306,7 +302,7 @@ const saveConn = (value) => {
         deviceManager.deviceConnectUpdate(value.devID, value.connID, connData);
     } else {
         // 新增连接
-        deviceManager.deviceConnectCreate(value.devID, connData, value.spec);
+        deviceManager.deviceConnectCreate(value.devID, connData);
         console.log('新增连接:', value);
     }
 

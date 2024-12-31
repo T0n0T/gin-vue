@@ -138,21 +138,22 @@ export class DeviceManager {
      * @throws {Error} 当设备创建失败时抛出错误
      * @returns {Promise<number>} 返回创建的设备ID
      */
-    async deviceCreate(deviceData, deviceHandle) {
+    async deviceCreate(deviceData) {
         try {
             const encodedContext = api.wireless.v1.DeviceCreateContext.encode({
                 deviceData: deviceData
             }).finish();
             await deviceApi.createDevice(encodedContext, this.deviceType)
-            const devID = this.deviceIdentify(deviceHandle)
-            const device = new Device(
-                devID,
-                DeviceStatus.INACTIVE,
-                deviceHandle,
-            )
-            device.deviceData = deviceData
-            this.store.addDevice(device)
-            return devID
+            await this.deviceCheck()
+            // const devID = this.deviceIdentify(deviceHandle)
+            // const device = new Device(
+            //     devID,
+            //     DeviceStatus.INACTIVE,
+            //     deviceHandle,
+            // )
+            // device.deviceData = deviceData
+            // this.store.addDevice(device)
+            // return devID
         } catch (error) {
             throw error
         }
@@ -231,7 +232,7 @@ export class DeviceManager {
      * @throws {Error} 当创建连接失败时抛出错误
      * @returns {Promise<number>} 返回创建的连接ID
      */
-    async deviceConnectCreate(devID, connectData, connSepc) {
+    async deviceConnectCreate(devID, connectData) {
         try {
             // 创建并序列化ConnectCreateContext  
             const encodedContext = api.wireless.v1.ConnectCreateContext.encode({
@@ -241,18 +242,16 @@ export class DeviceManager {
 
             // 调用API创建连接
             await deviceApi.createDeviceConnect(encodedContext, this.deviceType)
-
-            // 生成连接ID并创建连接实例
-            const connID = this.connectIdentify(connSepc)
-            const connect = new Connect(connID, false)
-            connect.connData = await kvGet(`${devID}/${connID}`)
-            // 将连接添加到设备的connectMap中
-            const device = this.store.getDevice(devID)
-            if (device) {
-                device.connectMap.set(connID, connect)
-            }
-
-            return connID
+            await this.deviceConnectCheck(devID)
+            // // 生成连接ID并创建连接实例
+            // const connID = this.connectIdentify(connSepc)
+            // const connect = new Connect(connID, false)
+            // connect.connData = await kvGet(`${devID}/${connID}`)
+            // // 将连接添加到设备的connectMap中
+            // const device = this.store.getDevice(devID)
+            // if (device) {
+            //     device.connectMap.set(connID, connect)
+            // }
         } catch (error) {
             throw error
         }
@@ -320,6 +319,7 @@ export class DeviceManager {
                     // 更新已存在连接的状态
                     connect.status = connectStatus.status
                     connect.connSpec = connectStatus.connectSpec
+                    connect.connData = await kvGet(`${devID}/${connID}`)
                 } else {
                     // 创建新的连接实例
                     const newConnect = new Connect(
@@ -327,7 +327,6 @@ export class DeviceManager {
                         connectStatus.status,
                     )
                     newConnect.connData = await kvGet(`${devID}/${connID}`)
-                    console.log(newConnect.connData)
                     device.connectMap.set(parseInt(connID), newConnect)
                 }
             }
