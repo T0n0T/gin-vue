@@ -348,6 +348,13 @@ export class DeviceManager {
     async deviceConnectUpdate(devID, connID, connData) {
         try {
             await kvPut(`${devID}/${connID}`, connData)
+            const device = this.store.getDevice(devID)
+            if (device) {
+                const connect = device.connectMap.get(connID)
+                if (connect) {
+                    connect.connData = connData
+                }
+            }
         } catch (error) {
             throw error
         }

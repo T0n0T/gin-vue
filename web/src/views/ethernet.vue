@@ -44,7 +44,7 @@
 </template>
 
 <script setup>
-import { Plus, DeleteFilled } from '@element-plus/icons-vue';
+import { Plus, DeleteFilled, Edit } from '@element-plus/icons-vue';
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import { v5 as uuidv5 } from 'uuid';
@@ -87,11 +87,11 @@ const ifacesMap = ref(new Map())
 const selectedIface = ref({});
 
 // 对话框内容
-const isEdit = ref(false);
+let isEdit = false;
 const editingRow = ref({});
 const keepAliveExclude = ref([]);
 const dialogTitle = computed(() => {
-    let connTitle = isEdit.value ? '编辑连接' : '新增连接';
+    let connTitle = isEdit ? '编辑连接' : '新增连接';
     return ifconfigVisible.value ? selectedIface.value.name : connTitle;
 });
 
@@ -193,7 +193,6 @@ watch(
 
 
 const openNewConnDialog = () => {
-    editConn.value = null;
     newConnDialogVisible.value = true;
     ifconfigVisible.value = false;
 };
@@ -287,6 +286,8 @@ const ifaceLinkUp = async (config) => {
 const DialogClose = () => {
     newConnDialogVisible.value = false;
     ifconfigVisible.value = false;
+    isEdit = false;
+    editingRow.value = {};
     keepAliveExclude.value.push('Socket'); // 关闭对话框时将 Socket 组件排除
     setTimeout(() => {
         keepAliveExclude.value = []; // 重置排除列表，以便下次打开时重新缓存
@@ -299,7 +300,7 @@ const saveConn = (value) => {
             proxyUrl: '',
             spec: value.spec
         }).finish();
-    if (isEdit.value) {
+    if (isEdit) {
         // 编辑现有连接,使用consul
         console.log('编辑连接:', editingRow.value);
         deviceManager.deviceConnectUpdate(value.devID, value.connID, connData);
@@ -309,9 +310,7 @@ const saveConn = (value) => {
         console.log('新增连接:', value);
     }
 
-    // 重置编辑状态并关闭对话框
-    isEdit.value = false;
-    editingRow.value = {};
+    // 关闭对话框
     newConnDialogVisible.value = false;
     ElMessage.success(editingRow.value ? '连接已更新' : '连接已添加')
 };
@@ -319,7 +318,7 @@ const saveConn = (value) => {
 const editConn = (row) => {
     console.log('编辑连接:', row);
     editingRow.value = Object.assign({}, row);
-    isEdit.value = true;
+    isEdit = true;
     newConnDialogVisible.value = true;
     ifconfigVisible.value = false;
     keepAliveExclude.value = [];

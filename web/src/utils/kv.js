@@ -11,7 +11,7 @@ const consulRequest = axios.create({
  */
 export const kvGet = async (key) => {
   try {
-    const response = await consulRequest.get(`/v1/kv/${key}`, {
+    const response = await consulRequest.get(`/v1/kv/${key}?raw`, {
       responseType: 'arraybuffer'
     });
     if (response.data && response.data.byteLength > 0) {
@@ -35,7 +35,8 @@ export const kvPut = async (key, value) => {
     await consulRequest.put(`/v1/kv/${key}`, value, {
       headers: {
         'Content-Type': 'application/octet-stream'
-      }
+      },
+      transformRequest: [(data) => data]
     });
     return true;
   } catch (error) {
