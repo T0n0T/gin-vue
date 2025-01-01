@@ -7,16 +7,18 @@ import { onMounted, ref, watch } from 'vue'
 import * as d3 from 'd3'
 
 /**
- * @typedef {Object} Connection
- * @property {'bluetooth'|'network'} type - 连接类型
- * @property {string} connectionId - 连接ID
- */
-
-/**
  * @typedef {Object} Route
- * @property {Connection} input - 输入连接
- * @property {Connection} output - 输出连接
- * @property {string} routerName - 路由名称
+ * @property {string} name - 路由名称
+ * @property {Object} upEntry - 数据入口
+ * @property {string} upEntry.devType - 设备类型
+ * @property {Object} upEntry.conn - 连接信息
+ * @property {number} upEntry.conn.devID - 设备ID
+ * @property {number} upEntry.conn.connID - 连接ID
+ * @property {Object} downEntry - 数据出口
+ * @property {string} downEntry.devType - 设备类型
+ * @property {Object} downEntry.conn - 连接信息
+ * @property {number} downEntry.conn.devID - 设备ID
+ * @property {number} downEntry.conn.connID - 连接ID
  */
 
 const props = defineProps({
@@ -53,22 +55,22 @@ const updateTopology = (routes) => {
     
     routes.forEach(route => {
         // 处理输入连接
-        const inputId = `${route.input.type}_${route.input.connectionId}`
+        const inputId = `${route.upEntry.devType}_${route.upEntry.conn.connID}`
         if (!uniqueConnections.has(inputId)) {
             uniqueConnections.set(inputId, {
                 id: inputId,
-                name: `${getTypeName(route.input.type)}\n${route.input.connectionId}`,
-                type: route.input.type
+                name: `${getTypeName(route.upEntry.devType)}\n${route.upEntry.conn.connID}`,
+                type: route.upEntry.devType
             })
         }
         
         // 处理输出连接
-        const outputId = `${route.output.type}_${route.output.connectionId}`
+        const outputId = `${route.downEntry.devType}_${route.downEntry.conn.connID}`
         if (!uniqueConnections.has(outputId)) {
             uniqueConnections.set(outputId, {
                 id: outputId,
-                name: `${getTypeName(route.output.type)}\n${route.output.connectionId}`,
-                type: route.output.type
+                name: `${getTypeName(route.downEntry.devType)}\n${route.downEntry.conn.connID}`,
+                type: route.downEntry.devType
             })
         }
         
@@ -76,7 +78,7 @@ const updateTopology = (routes) => {
         links.push({
             source: inputId,
             target: outputId,
-            name: route.routerName,
+            name: route.name,
             data: route
         })
     })
@@ -159,7 +161,12 @@ const updateTopology = (routes) => {
  * @returns {string} 显示名称
  */
 const getTypeName = (type) => {
-    return type === 'bluetooth' ? '蓝牙' : '网络连接'
+    const typeMap = {
+        ble: '蓝牙',
+        net: '以太网',
+        wlan: '无线网络'
+    }
+    return typeMap[type] || type
 }
 
 /**
@@ -168,7 +175,12 @@ const getTypeName = (type) => {
  * @returns {string} 颜色代码
  */
 const getNodeColor = (type) => {
-    return type === 'bluetooth' ? '#409EFF' : '#67C23A'
+    const colorMap = {
+        ble: '#409EFF',
+        net: '#E6A23C',
+        wlan: '#F56C6C'
+    }
+    return colorMap[type] || '#909399'
 }
 
 /**
