@@ -8,6 +8,7 @@ class Entry {
     this.devID = devID
     this.connID = connID
     this.refCount = 0  // 引用计数
+    this.chanID = null // 通道ID
   }
 }
 
@@ -132,6 +133,7 @@ export class RouterManager {
       // 更新表单中的channel ID
       routeForm.upEntry.chanID = upEntry.chanID
       routeForm.downEntry.chanID = downEntry.chanID
+      console.log('handle finished', routeForm)
     } catch (error) {
       throw error
     }
@@ -208,6 +210,7 @@ export class RouterManager {
         connID: parseInt(upEntry.connID)
       }).finish()
       await channelApi.bindChannel(encodedUpBindContext, `${upEntry.devType}`)
+      upEntry.chanID = upChanId
 
       const encodedDownBindContext = api.wireless.v1.ChannelBindContext.encode({
         chanId: downChanId,
@@ -215,6 +218,7 @@ export class RouterManager {
         connID: parseInt(downEntry.connID)
       }).finish()
       await channelApi.bindChannel(encodedDownBindContext, `${downEntry.devType}`)
+      downEntry.chanID = downChanId
     } catch (error) {
       throw error
     }
@@ -302,6 +306,52 @@ export class RouterManager {
           break
         }
       }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  /**
+   * 启用router
+   * @param {Object} routeForm - 路由表单对象
+   * @returns {Promise<void>}
+   */
+  async enableRouter(routeForm) {
+    try {
+      const encodedUpChannelId = api.wireless.v1.ChannelID.encode({
+        ID: routeForm.upEntry.chanID
+      }).finish()
+      await channelApi.enableChannel(encodedUpChannelId, `${routeForm.upEntry.devType}`)
+
+      const encodedDownChannelId = api.wireless.v1.ChannelID.encode({
+        ID: routeForm.downEntry.chanID
+      }).finish()
+      await channelApi.enableChannel(encodedDownChannelId, `${routeForm.downEntry.devType}`)
+
+      routeForm.status = 'enabled'
+    } catch (error) {
+      throw error
+    }
+  }
+
+  /**
+   * 禁用router
+   * @param {Object} routeForm - 路由表单对象
+   * @returns {Promise<void>}
+   */
+  async disableRouter(routeForm) {
+    try {
+      const encodedUpChannelId = api.wireless.v1.ChannelID.encode({
+        ID: routeForm.upEntry.chanID
+      }).finish()
+      await channelApi.disableChannel(encodedUpChannelId, `${routeForm.upEntry.devType}`)
+
+      const encodedDownChannelId = api.wireless.v1.ChannelID.encode({
+        ID: routeForm.downEntry.chanID
+      }).finish()
+      await channelApi.disableChannel(encodedDownChannelId, `${routeForm.downEntry.devType}`)
+
+      routeForm.status = 'disabled'
     } catch (error) {
       throw error
     }

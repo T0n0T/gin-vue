@@ -41,10 +41,18 @@
                         <el-tag>ID: {{ row.downEntry.conn.connID }}</el-tag>
                     </template>
                 </el-table-column>
+                <el-table-column label="状态" width="100">
+                    <template #default="{ row }">
+                        <el-switch v-model="row.status" active-value="enabled" inactive-value="disabled"
+                            @change="handleStatusChange(row)" />
+                    </template>
+                </el-table-column>
                 <el-table-column label="操作" width="120">
                     <template #default="{ row }">
-                        <el-button text type="primary" circle @click="editRoute(row)">编辑</el-button>
-                        <el-button text type="danger" circle @click="deleteRoute(row)">删除</el-button>
+                        <el-button text type="primary" circle @click="editRoute(row)"
+                            :disabled="row.status === 'enabled'">编辑</el-button>
+                        <el-button text type="danger" circle @click="deleteRoute(row)"
+                            :disabled="row.status === 'enabled'">删除</el-button>
                     </template>
                 </el-table-column>
             </el-table>
@@ -157,6 +165,7 @@ const editingRoute = ref(null)
 const RouteForm = ref({
     name: '',
     upEntry: {
+        chanID: 0,
         devType: '',
         conn: {
             devID: 0,
@@ -164,6 +173,7 @@ const RouteForm = ref({
         }
     },
     downEntry: {
+        chanID: 0,
         devType: '',
         conn: {
             devID: 0,
@@ -247,6 +257,7 @@ const openRouteDialog = () => {
     RouteForm.value = {
         name: '',
         upEntry: {
+            chanID: 0,
             devType: '',
             conn: {
                 devID: 0,
@@ -254,6 +265,7 @@ const openRouteDialog = () => {
             }
         },
         downEntry: {
+            chanID: 0,
             devType: '',
             conn: {
                 devID: 0,
@@ -275,12 +287,13 @@ const saveRoute = () => {
             ElMessage.error('请正确填写表单')
             return
         }
-        console.log('RouteForm:', RouteForm.value)
+
         try {
             if (editingRoute.value) {
                 await routerManager.removeRouter(editingRoute.value)
             }
             await routerManager.addRouter(RouteForm.value)
+            console.log('保存路由成功:', RouteForm.value)
             routerStore.addRoute(RouteForm.value)
             routeDialogVisible.value = false
             ElMessage.success(editingRoute.value ? '路由已更新' : '路由已添加')
@@ -322,6 +335,23 @@ const deleteRoute = async (route) => {
  */
 const handleRouteSelect = (route) => {
     console.log('选中路由:', route)
+}
+
+const handleStatusChange = async (route) => {
+    try {
+        console.log('状态切换:', route)
+        if (route.status === 'enabled') {
+            await routerManager.enableRouter(route)
+        } else {
+            await routerManager.disableRouter(route)
+        }
+        ElMessage.success(`路由已${route.status === 'enabled' ? '启用' : '禁用'}`)
+    } catch (error) {
+        console.error('状态切换失败:', error)
+        ElMessage.error('状态切换失败，请稍后重试')
+        // 回滚状态
+        route.status = route.status === 'enabled' ? 'disabled' : 'enabled'
+    }
 }
 
 /**
