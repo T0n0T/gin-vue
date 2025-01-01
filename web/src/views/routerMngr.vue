@@ -52,12 +52,7 @@
 
         <!-- 添加/编辑路由对话框 -->
         <el-dialog v-model="routeDialogVisible" draggable :title="editingRoute ? '编辑路由' : '添加路由'" width="500px">
-            <el-form
-              ref="routeFormRef"
-              :model="RouteForm"
-              :rules="rules"
-              label-width="auto"
-            >
+            <el-form ref="routeFormRef" :model="RouteForm" :rules="rules" label-width="auto">
                 <el-form-item label="路由名称" prop="name">
                     <el-input v-model="RouteForm.name">
                         <template #append>
@@ -83,7 +78,7 @@
                                     <el-option v-for="conn in InputConnections" :value="conn" :label="conn.connStr">
                                         <span>{{ conn.connStr }}</span>
                                         <span style="float: right; color: #8492a6; font-size: 13px">
-                                            {{ conn.devName }}
+                                            {{ conn.devStr }}
                                         </span>
                                     </el-option>
                                 </el-select>
@@ -109,7 +104,7 @@
                                     <el-option v-for="conn in OutputConnections" :value="conn" :label="conn.connStr">
                                         <span>{{ conn.connStr }}</span>
                                         <span style="float: right; color: #8492a6; font-size: 13px">
-                                            {{ conn.devName }}
+                                            {{ conn.devStr }}
                                         </span>
                                     </el-option>
                                 </el-select>
@@ -139,6 +134,7 @@ import { storeToRefs } from 'pinia'
 import { useRouterStore } from '../store/router'
 import { deviceTypes, useDeviceStore } from '../store/device'
 import RouterTopology from '../components/routerMngr/TopologyGraph.vue'
+import { RouterManager } from '../core/routerMngr'
 
 /**
  * @type {import('vue').Ref<boolean>} 是否显示拓扑图视图
@@ -182,7 +178,7 @@ const routeFormRef = ref(null)
  * @type {Object} 表单验证规则
  */
 const rules = {
-    'name' : [
+    'name': [
         { required: true, message: '请输入路由名称', trigger: 'blur' },
         { min: 1, message: '路由名称不能为空', trigger: 'blur' }
     ],
@@ -273,37 +269,25 @@ const openRouteDialog = () => {
  */
 const saveRoute = () => {
     if (!routeFormRef.value) return
-    
-    routeFormRef.value.validate((valid) => {
+
+    routeFormRef.value.validate(async (valid) => {
         if (!valid) {
             ElMessage.error('请正确填写表单')
             return
         }
-
-        const router = {
-            name: RouteForm.value.name,
-            upEntry: {
-                devType: RouteForm.value.upEntry.devType,
-                devID: RouteForm.value.upEntry.conn.devID,
-                connID: RouteForm.value.upEntry.conn.connID
-            },
-            downEntry: {
-                devType: RouteForm.value.downEntry.devType,
-                devID: RouteForm.value.downEntry.conn.devID,
-                connID: RouteForm.value.downEntry.conn.connID
+        console.log('RouteForm:', RouteForm.value)
+        try {
+            if (editingRoute.value) {
+                await routerManager.removeRouter(editingRoute.value)
             }
-        }
-
-        console.log('Router:', router)
-
-        if (editingRoute.value) {
-            routerStore.updateRoute({ ...RouteForm.value, id: editingRoute.value.id })
-        } else {
+            await routerManager.addRouter(RouteForm.value)
             routerStore.addRoute(RouteForm.value)
+            routeDialogVisible.value = false
+            ElMessage.success(editingRoute.value ? '路由已更新' : '路由已添加')
+        } catch (error) {
+            console.error('保存路由失败:', error)
+            ElMessage.error('保存路由失败，请稍后重试')
         }
-
-        routeDialogVisible.value = false
-        ElMessage.success(editingRoute.value ? '路由已更新' : '路由已添加')
     })
 }
 
@@ -321,9 +305,15 @@ const editRoute = (route) => {
  * @description 删除路由
  * @param {Object} route 要删除的路由对象
  */
-const deleteRoute = (route) => {
-    routerStore.deleteRoute(route.id)
-    ElMessage.success('路由已删除')
+const deleteRoute = async (route) => {
+    try {
+        await routerManager.removeRouter(route.id)
+        routerStore.deleteRoute(route)
+        ElMessage.success('路由已删除')
+    } catch (error) {
+        console.error('删除路由失败:', error)
+        ElMessage.error('删除路由失败，请稍后重试')
+    }
 }
 
 /**
@@ -346,7 +336,7 @@ const getDeviceConnections = (deviceType) => {
             connections.push({
                 devID: device.devID,
                 connID: connect.connID,
-                devName: device.deviceStr,
+                devStr: device.deviceStr,
                 connStr: connect.connStr
             })
         })
@@ -385,9 +375,13 @@ const filteredRoutes = computed(() => {
 
     const query = searchQuery.value.toLowerCase()
     return routes.value.filter(route =>
-        route.routerName.toLowerCase().includes(query) ||
-        route.upEntry.connID.toString().toLowerCase().includes(query) ||
-        route.downEntry.connID.toString().toLowerCase().includes(query)
+        route.name.toLowerCase().includes(query) ||
+        route.upEntry.devType.toLowerCase().includes(query) ||
+        route.downEntry.devType.toLowerCase().includes(query) ||
+        route.upEntry.conn.devID.toLowerCase().includes(query) ||
+        route.downEntry.conn.devID.toLowerCase().includes(query) ||
+        route.upEntry.conn.connID.toString().toLowerCase().includes(query) ||
+        route.downEntry.conn.connID.toString().toLowerCase().includes(query)
     )
 })
 
@@ -397,9 +391,13 @@ const handleSearch = () => {
 
     // 找到第一个匹配的行索引
     const index = filteredRoutes.value.findIndex(route =>
-        route.routerName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        route.upEntry.connID.toString().toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        route.downEntry.connID.toString().toLowerCase().includes(searchQuery.value.toLowerCase())
+        route.name.toLowerCase().includes(query) ||
+        route.upEntry.devType.toLowerCase().includes(query) ||
+        route.downEntry.devType.toLowerCase().includes(query) ||
+        route.upEntry.conn.devID.toLowerCase().includes(query) ||
+        route.downEntry.conn.devID.toLowerCase().includes(query) ||
+        route.upEntry.conn.connID.toString().toLowerCase().includes(query) ||
+        route.downEntry.conn.connID.toString().toLowerCase().includes(query)
     )
 
     if (index > -1) {
@@ -415,8 +413,18 @@ const handleSearch = () => {
 const routerStore = useRouterStore()
 const { routes } = storeToRefs(routerStore)
 
-onMounted(() => {
-    // store中的数据会自动加载，不需要额外操作
+// 创建全局RouterManager实例
+const routerManager = new RouterManager()
+
+onMounted(async () => {
+    try {
+        // 初始化RouterManager
+        routerManager.init(routes.value)
+        console.log('RouterManager初始化成功')
+    } catch (error) {
+        console.error('RouterManager初始化失败:', error)
+        ElMessage.error('路由管理器初始化失败，请检查网络连接')
+    }
     console.log('路由数据已加载:', routes.value)
 })
 </script>
