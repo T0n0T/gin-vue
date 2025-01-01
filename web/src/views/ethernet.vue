@@ -120,6 +120,7 @@ const filteredConnections = computed(() => {
 
 onMounted(() => {
     // 启动定时器，每5秒检查一次设备状态
+    ifacesFetch();
     timer = setInterval(async () => {
         try {
             await deviceManager.deviceCheck();
