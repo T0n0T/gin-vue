@@ -197,8 +197,8 @@ export class DeviceManager {
                 if (device) {
                     // 更新已存在设备的状态
                     device.status = DeviceStatus.ACTIVE
-                    device.deviceHandle = deviceHandle
-                    device.deviceStr = this.deviceIdentify(device)
+                    // device.deviceHandle = deviceHandle
+                    // device.deviceStr = this.deviceIdentify(device)
                 } else {
                     // 创建新的设备实例
                     const newDevice = new Device(

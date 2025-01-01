@@ -8,7 +8,7 @@
                     </div>
                 </template>
                 <KeepAlive :exclude="keepAliveExclude">
-                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow" :ifaceMap="ifacesMap"
+                    <Socket v-if="!ifconfigVisible && newConnDialogVisible" :formData="editingRow" :ifaceMap="ifaceMap"
                         @ifaceConfigure="ifconfigCheckout" @ifaceFetch="ifacesFetch" @socketDialogSubmit="saveConn"
                         @socketDialogclose="DialogClose" />
                     <Ifconfig v-else :iface="selectedIface" @ifconfigSubmit="ifaceLinkUp"
@@ -21,7 +21,7 @@
             </div>
             <el-table ref="ethConnTable" :data="filteredConnections" :border="true" style="width: 100%"
                 highlight-current-row>
-            
+
                 <el-table-column width="5">
                     <template #default="{ row }">
                         <div :class="['status-indicator', row.status ? 'connected' : 'disconnected']"></div>
@@ -60,7 +60,11 @@ const deviceManager = new DeviceManager(
     'net',
     (device) => {
         try {
-            const handle = netctrl.DeviceHandle.decode(device?.deviceHandle);
+            const handle = netctrl.DeviceHandle.decode(device.deviceHandle);
+            const iface = ifaceMap.value.get(handle.mac);
+            if (iface) {
+                return iface.name;             
+            }
             return handle.mac;
         } catch (error) {
             console.error('Failed to make device identify:', error);
@@ -83,7 +87,7 @@ const newConnDialogVisible = ref(false);
 const ifconfigVisible = ref(false);
 
 // 网卡选择
-const ifacesMap = ref(new Map())
+const ifaceMap = ref(new Map())
 const selectedIface = ref({});
 
 // 对话框内容
@@ -138,25 +142,20 @@ onUnmounted(() => {
 watch(
     () => deviceManager.store.devices,
     () => {
-        // 更新iface状态
-        for (const [mac, iface] of ifacesMap.value.entries()) {
-            const devHandle = netctrl.DeviceHandle.encode({
-                mac: mac,
-            }).finish();
-            const devID = deviceManager.deviceIdentify(devHandle);
-            const device = deviceManager.store.getDevice(devID);
-            if (device) {
-                ifacesMap.value.set(mac, {
-                    ...iface,
-                    devID: devID,
-                    status: device.status
-                });
-            }
-        }
-
         // // 更新connect列表
         for (const [devID, device] of deviceManager.store.devices.entries()) {
-            const iface = Array.from(ifacesMap.value.values()).find(i => i.devID === devID);
+            let iface = null;
+            if (typeof device.deviceStr === 'string' && device.deviceStr.trim() !== '') {
+                iface = iface = Array.from(ifaceMap.value.values()).find(i => i.name === device.deviceStr);
+                if (iface) {
+                    iface.devID = devID;
+                    iface.status = device.status; 
+                }
+            } else {
+                // 如果 device.deviceStr 不可用，则使用原始的 devID 查找 iface
+                iface = Array.from(ifaceMap.value.values()).find(i => i.devID === devID);
+                iface.status = device.status; 
+            }
             for (const [connID, connect] of device.connectMap.entries()) {
                 const connData = netctrl.ConnectData.decode(connect.connData);
                 const key = `${devID}-${connID}`;
@@ -202,8 +201,8 @@ const ifacesFetch = async () => {
             async (ctx) => {
                 try {
                     const deviceInfo = netctrl.DeviceInfo.decode(ctx);
-                    if (!ifacesMap.value.has(deviceInfo.mac)) {
-                        ifacesMap.value.set(deviceInfo.mac, {
+                    if (!ifaceMap.value.has(deviceInfo.mac)) {
+                        ifaceMap.value.set(deviceInfo.mac, {
                             name: deviceInfo.name,
                             mac: deviceInfo.mac,
                             devID: 0,
@@ -292,10 +291,10 @@ const DialogClose = () => {
 
 const saveConn = (value) => {
     const connData = netctrl.ConnectData.encode({
-            url: `${value.selectedProtocol}://${value.remoteAddr}`,
-            proxyUrl: '',
-            spec: value.spec
-        }).finish();
+        url: `${value.selectedProtocol}://${value.remoteAddr}`,
+        proxyUrl: '',
+        spec: value.spec
+    }).finish();
     if (isEdit) {
         // 编辑现有连接,使用consul
         console.log('编辑连接:', editingRow.value);
@@ -396,6 +395,7 @@ const handleSearch = () => {
     justify-content: flex-start;
     margin-bottom: 15px;
 }
+
 .status-indicator {
     width: 5px;
     height: 100%;
