@@ -1,11 +1,12 @@
-version: '3.8'
+version: '3'
 services:
   devcontainer:
-    image: go-node-dev:latest
+    image: golang-dev:latest
     network_mode: host
     privileged: true
     volumes:
       - ..:/workspaces:cached
       - ../../gopath:/go:cached
+      - ../../.vscode-server:~/.vscode-server:cached
     working_dir: /workspaces
     command: sleep infinity
